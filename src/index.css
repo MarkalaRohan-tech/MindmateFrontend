@@ -1,0 +1,7 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+a:hover{
+    color:orange;
+    cursor: pointer;
+}
