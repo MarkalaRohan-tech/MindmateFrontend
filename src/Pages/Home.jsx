@@ -4,9 +4,21 @@ import { NavLink } from 'react-router-dom';
 import FeaturesCard from './FeaturesCard';
 import { useContext } from "react";
 import { ThemeContext } from "../ThemeContext";
-
+import { useAuth } from "../Context/AuthContext";
+import { useNavigate } from 'react-router-dom';
+import { SuccessToast, ErrorToast } from "../Utils/ReactToast";
+import { toast } from "react-toastify";
 const Home = () => {
+  const { logout,isAuthenticated } = useAuth();
   const { theme } = useContext(ThemeContext);
+  const navigate = useNavigate();
+  const handleLogout = () => {
+    logout();
+    toast(<SuccessToast message="Logged out successfully" />);
+    setTimeout(() => {
+      navigate("/login");
+    },3000)
+  }
   const features = [
     {
       id: 1,
@@ -118,7 +130,7 @@ const Home = () => {
           <div className="text-md md:text-lg text-white lg:text-3xl font-semibold text-shadow-lg">
             A sound mind is sound life.
           </div>
-          <div className="row flex flex-row w-1/2 md:p-4 gap-2 justify-center items-center mt-5">
+          { !isAuthenticated ? <div className="row flex flex-row w-1/2 md:p-4 gap-2 justify-center items-center mt-5">
             <NavLink to="/register">
               <button className="btn shadow-lg bg-white ml-5 mr-5 text-orange-400">
                 <b>Signup</b>
@@ -129,7 +141,13 @@ const Home = () => {
                 <b>Login</b>
               </button>
             </NavLink>
-          </div>
+          </div> : (
+            <div className="row flex flex-row w-1/2 md:p-4 gap-2 justify-center items-center mt-5">
+                <button onClick={handleLogout} className="btn shadow-lg bg-white ml-5 mr-5 text-orange-400">
+                  <b>Logout</b>
+                </button>
+            </div>
+          )}
         </div>
       </div>
       <h1 className={`${theme === "dark" ? "text-white" : "text-black"} font-semibold mt-5 mb-5 pt-5 pb-5 text-center text-shadow-lg text-lg md:text-3xl lg:text-5xl`}>
@@ -219,6 +237,7 @@ const Home = () => {
             self-care routine, MoodMate is here to walk with you—every step of
             the way.
           </p>
+          { !isAuthenticated ?
           <div className="row flex flex-row w-full md:p-4 gap-2 justify-center items-center mt-5">
             <NavLink to="/register">
               <button className="btn shadow-lg bg-white ml-5 mr-5 text-orange-400">
@@ -230,7 +249,13 @@ const Home = () => {
                 <b>Login</b>
               </button>
             </NavLink>
-          </div>
+            </div> :
+            <div className="row flex flex-row w-full md:p-4 gap-2 justify-center items-center mt-5">
+              <button onClick={handleLogout} className="btn shadow-lg bg-white ml-5 mr-5 text-orange-400">
+                <b>Logout</b>
+              </button>
+            </div>
+           }
         </div>
       </div>
     </div>

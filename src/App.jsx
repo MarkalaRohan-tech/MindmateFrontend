@@ -1,4 +1,4 @@
-import { createBrowserRouter,RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./App.css";
 import Home from "./Pages/Home";
 import Dashboard from "./Pages/Dashboard";
@@ -10,28 +10,67 @@ import SelfCare from "./components/SelfCareList";
 import Profile from "./components/Profile";
 import Layout from "./Layout";
 import { ThemeProvider } from "./ThemeContext";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import ProtectedRoute from "./Utils/ProtectedRoute";
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <Layout />,
     children: [
-      { index: true, element: <Home /> },
-      { path: "/dashboard", element: <Dashboard /> },
-      { path: "/peermessage", element: <PeerMessage /> },
-      { path: "/selfcare", element: <SelfCare /> },
-      { path: "/moodcheck", element: <MoodCheck /> },
-      { path: "/profile", element: <Profile /> },
+      { index: true, element: <Home /> }, // public
+      {
+        path: "/dashboard",
+        element: (
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/peermessage",
+        element: (
+          <ProtectedRoute>
+            <PeerMessage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/selfcare",
+        element: (
+          <ProtectedRoute>
+            <SelfCare />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/moodcheck",
+        element: (
+          <ProtectedRoute>
+            <MoodCheck />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/profile",
+        element: (
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        ),
+      },
     ],
   },
-  { path: "/login", element: <Login /> },
-  { path: "/register", element: <Register /> },
+  { path: "/login", element: <Login /> }, // public
+  { path: "/register", element: <Register /> }, // public
 ]);
 
 function App() {
   return (
     <ThemeProvider>
       <RouterProvider router={router} />
+      <ToastContainer position="top-center" autoClose={2500} hideProgressBar />
     </ThemeProvider>
   );
 }

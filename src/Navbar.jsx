@@ -3,10 +3,14 @@ import { NavLink } from "react-router-dom";
 import { useEffect } from 'react';
 import { useContext } from "react";
 import { ThemeContext } from "./ThemeContext";
+import { useAuth } from "./Context/AuthContext";
 
 
 const Navbar = ({ pos }) => {
   const { theme, toggleTheme } = useContext(ThemeContext);
+  
+  const {isAuthenticated } = useAuth();
+
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
@@ -24,13 +28,12 @@ const Navbar = ({ pos }) => {
                 viewBox="0 0 24 24"
                 stroke="currentColor"
               >
-                {" "}
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth="2"
                   d="M4 6h16M4 12h8m-8 6h16"
-                />{" "}
+                />
               </svg>
             </div>
             <ul
@@ -52,11 +55,13 @@ const Navbar = ({ pos }) => {
               <li className="hidden">
                 <NavLink to="/profile">Profile</NavLink>
               </li>
-              <NavLink to="/login">
-                <li className="btn h-8 bg-orange-400 text-white font-semibold">
-                  Login
-                </li>
-              </NavLink>
+              {!isAuthenticated && (
+                <NavLink to="/login">
+                  <li className="btn h-8 bg-orange-400 text-white font-semibold">
+                    Login
+                  </li>
+                </NavLink>
+              )}
               <div className="p-2">
                 <label className="flex cursor-pointer gap-2">
                   <svg
@@ -130,11 +135,13 @@ const Navbar = ({ pos }) => {
             <li className="hidden">
               <NavLink to="/profile">Profile</NavLink>
             </li>
-            <NavLink to="/login">
-              <li className="btn h-8 bg-orange-400 text-white font-semibold">
-                Login
-              </li>
-            </NavLink>
+            {!isAuthenticated && (
+              <NavLink to="/login">
+                <li className="btn h-8 bg-orange-400 text-white font-semibold">
+                  Login
+                </li>
+              </NavLink>
+            )}
             <div className="h-full w-fit p-1.5">
               <label className="flex cursor-pointer gap-2">
                 <svg
