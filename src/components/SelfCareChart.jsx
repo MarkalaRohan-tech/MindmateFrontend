@@ -1,6 +1,6 @@
 import React, { useContext, useState } from "react";
 import { Bar } from "react-chartjs-2";
-import { ThemeContext } from "../ThemeContext";
+import { ThemeContext } from "../Context/ThemeContext";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -28,7 +28,7 @@ const SelfCareChart = ({ list }) => {
       datasets: [
         {
           label: "Care Score of this week",
-          data: [7, 7, 4, 5, 4, 1, 6],
+          data: list?.map((item) => item.weeklyCount || 0),
           backgroundColor: "#fb923c",
           borderRadius: 4,
           barPercentage: list.length === 1 ? 0.2 : 0.1,

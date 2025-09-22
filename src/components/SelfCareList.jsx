@@ -1,57 +1,77 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import "../App.css";
-import { v4 as uuidv4 } from "uuid";
 import MusicPlayer from "./MusicPlayer";
 import SelfCareChart from "./SelfCareChart";
-
+import axios from "axios";
+import { useAuth } from "../Context/AuthContext";
+import JournalPage from "./JournalPage";
 
 const SelfCareList = () => {
+  const { user } = useAuth();
   const [activity, setActivity] = useState(0);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [selfCareActivities, setSelfCareActivities] = useState([{
-    id: uuidv4(),
-    title: "Meditation",
-    description: "15min of meditation in quite and calm place."
-  }]);
+  const [selfCareActivities, setSelfCareActivities] = useState([]);
 
-  const addActivity = () => {
-    setSelfCareActivities((prev) => [
-      ...prev,
-      {
-        id:uuidv4(),
-        title,
-        description,
-      },
-    ]);
+  // 🔹 Fetch activities for this user
+  useEffect(() => {
+    const fetchActivities = async () => {
+      if (!user?._id) return;
+      const res = await axios.get("/api/selfcare", {
+        params: { userId: user._id },
+        withCredentials: true,
+      });
+      setSelfCareActivities(res.data.activities || []);
+    };
+    fetchActivities();
+  }, [user]);
 
+  // 🔹 Add new activity
+  const addActivity = async (e) => {
+    e.preventDefault(); // prevent form reload
+    if (!user?._id) return;
+    const res = await axios.post(
+      "/api/selfcare",
+      { title, description, userId: user._id }, // ✅ include userId
+      { withCredentials: true }
+    );
+    setSelfCareActivities(res.data);
     setTitle("");
     setDescription("");
   };
-  
-  const activityStatus = (e) => {
-    setActivity((prev) => {
-      let updated = prev;
 
-      if (e.target.checked) {
-        if (prev < selfCareActivities.length) {
-          updated = prev + 1;
-        }
-      } else {
-        if (prev > 0) {
-          updated = prev - 1;
-        }
-      }
-      return updated;
-    });
+  // 🔹 Delete activity
+ const deleteActivity = async (id) => {
+   try {
+     const res = await axios.delete(`/api/selfcare/${id}`, {
+       withCredentials: true,
+     });
+     setSelfCareActivities(res.data);
+   } catch (err) {
+     console.error("Error deleting activity", err);
+   }
+ };
+
+
+  // 🔹 Update activity status
+  const activityStatus = async (e, id) => {
+    if (e.target.checked) {
+      await axios.patch(
+        `/api/selfcare/${id}/increment`,
+        { userId: user._id }, // ✅ include userId
+        { withCredentials: true }
+      );
+      setSelfCareActivities((prev) =>
+        prev.map((a) =>
+          a._id === id ? { ...a, weeklyCount: (a.weeklyCount || 0) + 1 } : a
+        )
+      );
+      setActivity((prev) => prev + 1);
+    } else {
+      setActivity((prev) => Math.max(prev - 1, 0));
+    }
   };
-  
-  const deleteActivity = (activityId) => {
-    setSelfCareActivities((prev) =>
-      prev.filter((activity) => activity.id !== activityId)
-    );
-  }
-  
+
   return (
     <div>
       <div className="w-[100vw] h-[100vh] px-5 pt-[70px] overflow-x-hidden">
@@ -140,13 +160,15 @@ const SelfCareList = () => {
                   <ul className="p-3">
                     {selfCareActivities.map((activity, index) => {
                       return (
-                        <li key={activity.id}>
+                        <li key={activity._id}>
                           <div className="p-3 my-2 grid grid-cols-[10%_80%_10%] rounded-2xl shadow-lg border-2 border-white">
                             <div className="flex justify-center items-center">
                               <input
                                 type="checkbox"
                                 className="w-6 h-6 accent-orange-400 cursor-pointer"
-                                onChange={activityStatus}
+                                onChange={(e) =>
+                                  activityStatus(e, activity._id)
+                                }
                               />
                             </div>
                             <div className="flex flex-col gap-1">
@@ -160,7 +182,7 @@ const SelfCareList = () => {
                             <div className="flex flex-col justify-center items-center">
                               <button
                                 className="btn bg-orange-400 rounded-lg text-white"
-                                onClick={() => deleteActivity(activity.id)}
+                                onClick={() => deleteActivity(activity._id)}
                               >
                                 <b>
                                   <i class="fa-solid fa-trash"></i>
@@ -178,7 +200,9 @@ const SelfCareList = () => {
             <div className="flex flex-col h-1/2 gap-2 mb-5">
               {/* Daily mood log*/}
               <div className="w-[100%] md:flex-1 flex border-2 border-white flex-col p-5 rounded-2xl shadow-lg ">
-                <h1 className="text-xl font-bold mb-5">Music List for Meditation</h1>
+                <h1 className="text-xl font-bold mb-5">
+                  Music List for Meditation
+                </h1>
                 <MusicPlayer></MusicPlayer>
               </div>
             </div>
@@ -186,12 +210,14 @@ const SelfCareList = () => {
           <div className="w-full">
             {/* Weekly mood trend */}
             <div className="w-[100%] h-lvh md:flex-1 flex flex-col border-2 border-white p-5 rounded-2xl shadow-lg justify-center items-center">
-              <h1 className="text-xl font-bold">Weekly Morning Mood Trend</h1>
+              <h1 className="text-xl font-bold">Weekly SelfCare Trend</h1>
               <p className="my-5">
                 Your morning mood average over the past week.
               </p>
               <SelfCareChart list={selfCareActivities} />
             </div>
+
+            <JournalPage />
           </div>
         </div>
       </div>

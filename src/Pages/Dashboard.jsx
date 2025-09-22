@@ -5,7 +5,7 @@ import BarGraph from "../components/BarGraph";
 import { recentActivities } from '../Data';
 import { achievedbadges } from '../Data';
 import { useContext } from "react";
-import { ThemeContext } from "../ThemeContext";
+import { ThemeContext } from "../Context/ThemeContext";
 
 const Dashboard = () => {
   const { theme } = useContext(ThemeContext);

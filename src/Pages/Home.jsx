@@ -3,7 +3,7 @@ import "../App.css"
 import { NavLink } from 'react-router-dom';
 import FeaturesCard from './FeaturesCard';
 import { useContext } from "react";
-import { ThemeContext } from "../ThemeContext";
+import { ThemeContext } from "../Context/ThemeContext";
 import { useAuth } from "../Context/AuthContext";
 import { useNavigate } from 'react-router-dom';
 import { SuccessToast, ErrorToast } from "../Utils/ReactToast";

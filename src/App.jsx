@@ -4,12 +4,12 @@ import Home from "./Pages/Home";
 import Dashboard from "./Pages/Dashboard";
 import Login from "./Pages/Login";
 import Register from "./Pages/Register";
-import MoodCheck from "./components/MoodCheckin";
-import PeerMessage from "./components/PeerMessages";
+import MoodCheck from "./Pages/MoodCheckin";
+import PeerMessage from "./Pages/PeerMessages";
 import SelfCare from "./components/SelfCareList";
 import Profile from "./components/Profile";
 import Layout from "./Layout";
-import { ThemeProvider } from "./ThemeContext";
+import { ThemeProvider } from "./Context/ThemeContext";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ProtectedRoute from "./Utils/ProtectedRoute";
@@ -70,7 +70,12 @@ function App() {
   return (
     <ThemeProvider>
       <RouterProvider router={router} />
-      <ToastContainer position="top-center" autoClose={2500} hideProgressBar />
+      <ToastContainer
+        position="top-center"
+        autoClose={2000}
+        hideProgressBar
+        closeButton={false}
+      />
     </ThemeProvider>
   );
 }

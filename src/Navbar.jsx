@@ -2,7 +2,7 @@ import React from 'react'
 import { NavLink } from "react-router-dom";
 import { useEffect } from 'react';
 import { useContext } from "react";
-import { ThemeContext } from "./ThemeContext";
+import { ThemeContext } from "./Context/ThemeContext";
 import { useAuth } from "./Context/AuthContext";
 
 
@@ -52,9 +52,11 @@ const Navbar = ({ pos }) => {
               <li>
                 <NavLink to="/peermessage">Messages</NavLink>
               </li>
-              <li className="hidden">
-                <NavLink to="/profile">Profile</NavLink>
-              </li>
+              {isAuthenticated && (
+                <li>
+                  <NavLink to="/profile">Profile</NavLink>
+                </li>
+              )}
               {!isAuthenticated && (
                 <NavLink to="/login">
                   <li className="btn h-8 bg-orange-400 text-white font-semibold">
@@ -132,9 +134,11 @@ const Navbar = ({ pos }) => {
             <li>
               <NavLink to="/peermessage">Messages</NavLink>
             </li>
-            <li className="hidden">
-              <NavLink to="/profile">Profile</NavLink>
-            </li>
+            {isAuthenticated && (
+              <li>
+                <NavLink to="/profile">Profile</NavLink>
+              </li>
+            )}
             {!isAuthenticated && (
               <NavLink to="/login">
                 <li className="btn h-8 bg-orange-400 text-white font-semibold">

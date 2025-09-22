@@ -1,7 +1,7 @@
 import {Line } from "react-chartjs-2";
 import { LineData } from "../Data";
 import { useContext } from "react";
-import { ThemeContext } from "../ThemeContext";
+import { ThemeContext } from "../Context/ThemeContext";
 
 import {
   Chart as ChartJS,

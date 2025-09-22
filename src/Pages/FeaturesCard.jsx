@@ -1,6 +1,6 @@
 import React from 'react'
 import { useContext } from "react";
-import { ThemeContext } from "../ThemeContext";
+import { ThemeContext } from "../Context/ThemeContext";
 
 const FeaturesCard = ({ header, para, icon }) => {
   const { theme } = useContext(ThemeContext);

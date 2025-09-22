@@ -36,7 +36,7 @@ const Register = () => {
       formData.phone
     );
 
-    if (res.token) {
+    if (res.status === 201) {
       toast(<SuccessToast message="Registered & logged in successfully!" />);
       setTimeout(() => navigate("/login"), 2000);
     } else {
