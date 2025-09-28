@@ -52,6 +52,9 @@ const Navbar = ({ pos }) => {
               <li>
                 <NavLink to="/peermessage">Messages</NavLink>
               </li>
+              <li>
+                <NavLink to="/journal">Journal</NavLink>
+              </li>
               {isAuthenticated && (
                 <li>
                   <NavLink to="/profile">Profile</NavLink>
@@ -133,6 +136,9 @@ const Navbar = ({ pos }) => {
             </li>
             <li>
               <NavLink to="/peermessage">Messages</NavLink>
+            </li>
+            <li>
+              <NavLink to="/journal">Journal</NavLink>
             </li>
             {isAuthenticated && (
               <li>

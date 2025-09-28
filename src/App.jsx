@@ -6,13 +6,14 @@ import Login from "./Pages/Login";
 import Register from "./Pages/Register";
 import MoodCheck from "./Pages/MoodCheckin";
 import PeerMessage from "./Pages/PeerMessages";
-import SelfCare from "./components/SelfCareList";
-import Profile from "./components/Profile";
+import SelfCare from "./Pages/SelfCareList";
+import Profile from "./Pages/Profile";
 import Layout from "./Layout";
 import { ThemeProvider } from "./Context/ThemeContext";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ProtectedRoute from "./Utils/ProtectedRoute";
+import JournalPage from "./components/JournalPage";
 
 const router = createBrowserRouter([
   {
@@ -57,6 +58,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <Profile />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/journal",
+        element: (
+          <ProtectedRoute>
+            <JournalPage />
           </ProtectedRoute>
         ),
       },

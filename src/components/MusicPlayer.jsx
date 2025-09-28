@@ -6,7 +6,7 @@ import React, {
   useRef,
 } from "react";
 
-// ✅ Custom hook to manage audio
+// Custom hook to manage audio
 const useAudioManager = () => {
   const audioRef = useRef(new Audio());
   const [isLoaded, setIsLoaded] = useState(false);
@@ -53,7 +53,7 @@ const MusicPlayer = () => {
   const { audioRef, isLoaded, isLoading, loadAudio, cleanup } =
     useAudioManager();
 
-  // ✅ Fetch API on mount (Jamendo)
+  // Fetch API on mount (Jamendo)
   useEffect(() => {
     const fetchMusic = async () => {
       try {
@@ -82,7 +82,27 @@ const MusicPlayer = () => {
 
   useEffect(() => {
     if (musicTrack.length > 0) {
+      const wasPlaying = isPlaying;
       loadAudio(musicTrack[currentTrackIndex].src);
+
+      // If we were playing before switching tracks, continue playing the new track
+      if (wasPlaying) {
+        // We need to wait for the audio to be loaded before playing
+        const playWhenReady = () => {
+          if (audioRef.current && audioRef.current.readyState >= 3) {
+            audioRef.current.play().catch((error) => {
+              console.error("Failed to play audio:", error);
+              setIsPlaying(false);
+            });
+          } else {
+            // If not ready yet, try again after a short delay
+            setTimeout(playWhenReady, 100);
+          }
+        };
+
+        // Small delay to ensure audio is properly loaded
+        setTimeout(playWhenReady, 50);
+      }
     }
   }, [currentTrackIndex, musicTrack, loadAudio]);
 
@@ -150,98 +170,180 @@ const MusicPlayer = () => {
   );
 
   return (
-    <div className="w-[100%] md:flex-1 flex border-2 border-white flex-col p-3 pb-5 rounded-2xl">
-      {/* ✅ Main Player */}
-      <div
-        className="Hero relative h-[100%] w-[100%] md:flex-1 flex justify-end border-2 border-white flex-col p-5 rounded-2xl"
-        style={{
-          backgroundImage: memoizedCurrentTrack.cover
-            ? `url(${memoizedCurrentTrack.cover})`
-            : "none",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      >
-        <div
-          className="absolute inset-0 bg-black"
-          style={{ backgroundColor: "white", opacity: 0.3, zIndex: 1 }}
-        ></div>
-        <div className="controls relative z-2 w-full p-5 flex flex-col items-center justify-end gap-5 bottom-0">
-          <p className="text-white text-shadow-lg font-bold text-center text-3xl">
-            {memoizedCurrentTrack.title || "Loading..."}
-          </p>
-          <div className="flex gap-3">
-            <button
-              onClick={playPrevious}
-              className="btn btn-circle text-2xl bg-orange-400 text-white hover:bg-orange-500"
-              disabled={isLoading}
-            >
-              <i className="fa-solid fa-backward"></i>
-            </button>
-            <button
-              className="btn btn-circle text-2xl bg-orange-400 text-white hover:bg-orange-500"
-              onClick={togglePlay}
-              disabled={!isLoaded || isLoading}
-            >
-              {isLoading ? (
-                <i className="fa-solid fa-spinner fa-spin"></i>
-              ) : isPlaying ? (
-                <i className="fa-solid fa-pause"></i>
-              ) : (
-                <i className="fa-solid fa-play"></i>
+    <div className="w-[95%] mx-auto bg-gradient-to-br from-white via-orange-50 to-white rounded-3xl shadow-2xl overflow-hidden border-2 border-orange-100">
+      {/* Modern Player Header */}
+      <div className="bg-orange-400/10 backdrop-blur-sm p-6 border-b border-orange-200/30">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <img
+                src={
+                  memoizedCurrentTrack.cover || "https://via.placeholder.com/60"
+                }
+                alt="Album art"
+                className="w-16 h-16 rounded-2xl object-cover shadow-lg ring-2 ring-orange-200"
+              />
+              {isPlaying && (
+                <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-orange-400 to-orange-500 opacity-75 blur animate-pulse"></div>
               )}
-            </button>
-            <button
-              onClick={playNext}
-              className="btn btn-circle text-2xl bg-orange-400 text-white hover:bg-orange-500"
-              disabled={isLoading}
-            >
-              <i className="fa-solid fa-forward"></i>
-            </button>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-orange-900 font-semibold text-lg truncate">
+                {memoizedCurrentTrack.title || "Loading..."}
+              </h3>
+              <p className="text-orange-600 text-sm">
+                {memoizedCurrentTrack.size || "Unknown"}
+              </p>
+            </div>
           </div>
-          {isLoading && <p className="text-white text-sm">Loading audio...</p>}
+          <div className="flex items-center space-x-1">
+            <div
+              className={`w-2 h-2 rounded-full ${
+                isPlaying ? "bg-orange-500 animate-pulse" : "bg-gray-400"
+              }`}
+            ></div>
+            <span className="text-xs text-orange-700">
+              {isPlaying ? "Playing" : "Paused"}
+            </span>
+          </div>
         </div>
-      </div>
 
-      {/* ✅ Playlist */}
-      <div
-        className="musicList h-[460px] overflow-y-scroll shadow-lg rounded-2xl border-2 border-white p-5 mt-5 mb-5"
-        onScroll={handleScroll}
-      >
-        <ul>{trackList}</ul>
-        {visibleTracks < musicTrack.length && (
-          <div className="text-center text-gray-500 mt-4">
-            Scroll to load more tracks...
+        {/* Control Buttons */}
+        <div className="flex items-center justify-center space-x-6 mt-6">
+          <button
+            onClick={playPrevious}
+            disabled={isLoading}
+            className="p-3 rounded-full bg-orange-100 hover:bg-orange-200 transition-all duration-200 text-orange-600 disabled:opacity-50 shadow-md"
+          >
+            <i className="fa-solid fa-backward text-lg"></i>
+          </button>
+
+          <button
+            onClick={togglePlay}
+            disabled={!isLoaded || isLoading}
+            className="p-4 rounded-full bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 transition-all duration-200 text-white shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:transform-none"
+          >
+            {isLoading ? (
+              <i className="fa-solid fa-spinner fa-spin text-xl"></i>
+            ) : isPlaying ? (
+              <i className="fa-solid fa-pause text-xl"></i>
+            ) : (
+              <i className="fa-solid fa-play text-xl ml-1"></i>
+            )}
+          </button>
+
+          <button
+            onClick={playNext}
+            disabled={isLoading}
+            className="p-3 rounded-full bg-orange-100 hover:bg-orange-200 transition-all duration-200 text-orange-600 disabled:opacity-50 shadow-md"
+          >
+            <i className="fa-solid fa-forward text-lg"></i>
+          </button>
+        </div>
+
+        {isLoading && (
+          <div className="flex items-center justify-center mt-4">
+            <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce mr-1"></div>
+            <div
+              className="w-2 h-2 bg-orange-400 rounded-full animate-bounce mr-1"
+              style={{ animationDelay: "0.1s" }}
+            ></div>
+            <div
+              className="w-2 h-2 bg-orange-400 rounded-full animate-bounce"
+              style={{ animationDelay: "0.2s" }}
+            ></div>
+            <span className="text-orange-700 text-sm ml-3">
+              Loading audio...
+            </span>
           </div>
         )}
+      </div>
+
+      {/* Modern Playlist */}
+      <div className="bg-white/80 backdrop-blur-sm">
+        <div className="px-6 py-4 border-b border-orange-200">
+          <h4 className="text-orange-900 font-semibold text-lg flex items-center">
+            <i className="fa-solid fa-music mr-2 text-orange-500"></i>
+            Playlist
+          </h4>
+        </div>
+
+        <div
+          className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-orange-300 scrollbar-track-transparent"
+          onScroll={handleScroll}
+        >
+          <div className="px-4 py-2">
+            {trackList}
+            {visibleTracks < musicTrack.length && (
+              <div className="text-center py-4">
+                <div className="inline-flex items-center text-orange-500 text-sm">
+                  <div className="w-1 h-1 bg-orange-400 rounded-full animate-pulse mr-2"></div>
+                  Scroll to load more tracks
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
-// ✅ Track Item component
+// Modern Track Item component
 const TrackItem = React.memo(({ audio, index, isActive, onSelect }) => (
-  <li
+  <div
     onClick={() => onSelect(index)}
-    className={`music shadow-lg rounded-2xl border-2 cursor-pointer hover:shadow-2xl hover:bg-gray-200 border-white p-3 mt-2 mb-2 transition-all ${
-      isActive ? "bg-orange-100 border-orange-400" : ""
+    className={`group cursor-pointer rounded-xl p-3 mb-2 transition-all duration-200 hover:bg-orange-50 ${
+      isActive
+        ? "bg-gradient-to-r from-orange-100 to-orange-50 border border-orange-300"
+        : "hover:bg-orange-25"
     }`}
   >
-    <div className="grid grid-cols-5 items-center w-full gap-3">
-      <div className="flex justify-center">
+    <div className="flex items-center space-x-3">
+      <div className="relative flex-shrink-0">
         <img
           src={audio.cover}
-          alt="musicCover"
-          className="w-[50px] h-[50px] rounded-full object-cover"
+          alt="Track cover"
+          className="w-12 h-12 rounded-lg object-cover shadow-sm"
           loading="lazy"
         />
+        {isActive && (
+          <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-orange-400/30 to-orange-300/30 flex items-center justify-center">
+            <div className="w-3 h-3 bg-white rounded-full animate-pulse shadow-sm"></div>
+          </div>
+        )}
       </div>
-      <div className="col-span-4">
-        <p className="text-xl font-semibold text-orange-400">{audio.title}</p>
-        <p className="text-sm text-gray-500">{audio.size}</p>
+
+      <div className="flex-1 min-w-0">
+        <p
+          className={`font-medium text-sm truncate transition-colors ${
+            isActive
+              ? "text-orange-800"
+              : "text-gray-800 group-hover:text-orange-700"
+          }`}
+        >
+          {audio.title}
+        </p>
+        <p
+          className={`text-xs truncate transition-colors ${
+            isActive
+              ? "text-orange-600"
+              : "text-gray-500 group-hover:text-orange-500"
+          }`}
+        >
+          {audio.size}
+        </p>
       </div>
+
+      {isActive && (
+        <div className="flex-shrink-0">
+          <div className="w-4 h-4 flex items-center justify-center">
+            <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+          </div>
+        </div>
+      )}
     </div>
-  </li>
+  </div>
 ));
 
 TrackItem.displayName = "TrackItem";

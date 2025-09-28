@@ -22,9 +22,6 @@ const PeerMessages = () => {
     })
   ).current;
 
-  /** -----------------------------
-   * Fetch initial messages
-   * ---------------------------- */
   useEffect(() => {
     const fetchMessages = async () => {
       try {
@@ -37,9 +34,6 @@ const PeerMessages = () => {
     fetchMessages();
   }, []);
 
-  /** -----------------------------
-   * Socket events
-   * ---------------------------- */
   useEffect(() => {
     socket.on("connect", () => console.log("Connected to server"));
     socket.on("disconnect", () => console.log("Disconnected"));
@@ -65,16 +59,10 @@ const PeerMessages = () => {
   }, [socket]);
 
 
-  /** -----------------------------
-   * Auto-scroll to bottom
-   * ---------------------------- */
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  /** -----------------------------
-   * Send message
-   * ---------------------------- */
   const handleSend = (e) => {
     e.preventDefault();
     if (!input.trim()) return;
@@ -83,9 +71,6 @@ const PeerMessages = () => {
     setInput("");
   };
 
-  /** -----------------------------
-   * Delete message
-   * ---------------------------- */
   const handleDelete = async (id) => {
     try {
       await axios.delete(`${API_BASE}/api/chat/${id}/${senderId}`);
@@ -97,7 +82,7 @@ const PeerMessages = () => {
 
   return (
     <div className="absolute top-10 m-10 w-[90%] grid grid-cols-1 lg:grid-cols-[40%_60%] gap-10 justify-center items-center">
-      {/* Left panel */}
+
       <div className="flex flex-col justify-center items-start gap-5 px-5">
         <h1 className="text-3xl md:text-4xl font-semibold text-gray-800">
           Peer Messaging
@@ -109,7 +94,6 @@ const PeerMessages = () => {
         <img src="/chat.png" alt="Chat Illustration" width={500} />
       </div>
 
-      {/* Chat panel */}
       <div className="relative w-full h-[600px] bg-gradient-to-br from-orange-200 to-orange-400 flex flex-col p-4 rounded-2xl shadow-xl">
         <ul className="flex-1 overflow-y-auto mb-16 p-4 bg-orange-50 rounded-xl flex flex-col gap-y-3">
           {messages.map((msg) => {
@@ -176,7 +160,6 @@ const PeerMessages = () => {
           <div ref={messagesEndRef} />
         </ul>
 
-        {/* Input */}
         <form
           onSubmit={handleSend}
           className="absolute bottom-4 left-4 right-4 flex bg-white rounded-full shadow-md overflow-hidden"
