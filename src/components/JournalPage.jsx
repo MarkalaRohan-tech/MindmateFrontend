@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState, useContext } from "react";
 import { useAuth } from "../Context/AuthContext";
 import { ThemeContext } from "../Context/ThemeContext";
+import api from "../Utils/axiosInstance";
+import Quill from "quill";
+import "quill/dist/quill.snow.css";
 
 const JournalPage = () => {
   const editorRef = useRef(null);
@@ -12,12 +15,12 @@ const JournalPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState("");
 
-  const API_BASE_URL =
-    import.meta.env.VITE_API_URL || "http://localhost:3000/api";
   const { user } = useAuth();
   const { theme } = useContext(ThemeContext);
 
-  // Helper Functions
+  // ===========================
+  // ✅ Helper Functions
+  // ===========================
   function getCurrentWeek() {
     const now = new Date();
     const startOfYear = new Date(now.getFullYear(), 0, 1);
@@ -85,7 +88,9 @@ const JournalPage = () => {
     return user?.id || user?.uid || user?._id;
   }
 
-  // Early return if user is not authenticated
+  // ===========================
+  // ✅ Early return if not logged in
+  // ===========================
   if (!getUserId()) {
     return (
       <div
@@ -98,18 +103,16 @@ const JournalPage = () => {
             theme === "light" ? "bg-white" : "bg-gray-800"
           }`}
         >
-          <div className="text-red-500 text-4xl sm:text-6xl mb-3 sm:mb-4">
-            ⚠️
-          </div>
+          <div className="text-red-500 text-5xl mb-3">⚠️</div>
           <h2
-            className={`text-xl sm:text-2xl font-bold mb-3 sm:mb-4 ${
+            className={`text-2xl font-bold mb-3 ${
               theme === "light" ? "text-gray-800" : "text-white"
             }`}
           >
             Authentication Required
           </h2>
           <p
-            className={`text-sm sm:text-base mb-3 sm:mb-4 ${
+            className={`text-sm mb-4 ${
               theme === "light" ? "text-gray-600" : "text-gray-400"
             }`}
           >
@@ -117,7 +120,7 @@ const JournalPage = () => {
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="bg-orange-500 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-orange-600 transition-colors text-sm sm:text-base"
+            className="bg-orange-500 text-white px-5 py-2 rounded-lg hover:bg-orange-600 transition"
           >
             Refresh Page
           </button>
@@ -126,11 +129,13 @@ const JournalPage = () => {
     );
   }
 
-  // Initialize Quill Editor
+  // ===========================
+  // ✅ Initialize Quill Editor
+  // ===========================
   useEffect(() => {
-    if (window.Quill && editorRef.current && !quillInstanceRef.current) {
-      quillInstanceRef.current = new window.Quill(editorRef.current, {
-        theme: theme === "light" ? "snow" : "snow",
+    if (editorRef.current && !quillInstanceRef.current) {
+      quillInstanceRef.current = new Quill(editorRef.current, {
+        theme: "snow",
         modules: {
           toolbar: [
             [{ header: [1, 2, false] }],
@@ -142,15 +147,15 @@ const JournalPage = () => {
           ],
         },
       });
-
       loadJournalEntry(currentDay);
     }
   }, []);
 
-  // Week change detection
+  // ===========================
+  // ✅ Week change detection
+  // ===========================
   useEffect(() => {
     initializeWeeklyData();
-
     const interval = setInterval(() => {
       const newWeek = getCurrentWeek();
       if (newWeek !== currentWeek) {
@@ -158,7 +163,6 @@ const JournalPage = () => {
         initializeWeeklyData();
       }
     }, 60000);
-
     return () => clearInterval(interval);
   }, [currentWeek]);
 
@@ -172,81 +176,30 @@ const JournalPage = () => {
       "Saturday",
       "Sunday",
     ];
-
     const initialLogStatus = days.map((day, index) => ({
       Sno: (index + 1).toString(),
       Day: day,
       status: "pending",
     }));
     setLogStatus(initialLogStatus);
-
     await loadWeeklyJournals();
   };
 
+  // ===========================
+  // ✅ Load Weekly Journals (Axios)
+  // ===========================
   const loadWeeklyJournals = async () => {
     try {
       setIsLoading(true);
       const userId = getUserId();
+      if (!userId) return;
 
-      if (!userId) {
-        console.error("No user ID available for loading weekly journals");
-        return;
-      }
+      const response = await api.get(`/api/journal/week/${currentWeek}`, {
+        params: { year: new Date().getFullYear(), userId },
+      });
 
-      const response = await fetch(
-        `${API_BASE_URL}/journal/week/${currentWeek}?year=${new Date().getFullYear()}&userId=${userId}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          console.error("Authentication failed - user may need to login again");
-          setSaveStatus("Authentication error");
-          setTimeout(() => setSaveStatus(""), 3000);
-          return;
-        } else if (response.status === 404) {
-          const days = [
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-            "Saturday",
-            "Sunday",
-          ];
-          const emptyJournals = days.map((day) => ({
-            day,
-            exists: false,
-            content: null,
-            wordCount: 0,
-            characterCount: 0,
-          }));
-          setJournalView(emptyJournals);
-
-          const updatedLogStatus = emptyJournals.map((j, index) => ({
-            Sno: (index + 1).toString(),
-            Day: j.day,
-            status: getDayStatus(j.day),
-          }));
-          setLogStatus(updatedLogStatus);
-
-          if (quillInstanceRef.current) {
-            quillInstanceRef.current.root.innerHTML =
-              "<p>Start writing your journal entry...</p>";
-          }
-          return;
-        }
-      }
-
-      const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.error || "API error");
-      }
+      const { data } = response;
+      if (!data.success) throw new Error(data.error || "API error");
 
       const journals = data.data || [];
       setJournalView(journals);
@@ -272,48 +225,32 @@ const JournalPage = () => {
     } catch (error) {
       console.error("Error loading weekly journals:", error);
       setSaveStatus("Error loading journals");
-      setTimeout(() => setSaveStatus(""), 3000);
     } finally {
       setIsLoading(false);
+      setTimeout(() => setSaveStatus(""), 3000);
     }
   };
 
+  // ===========================
+  // ✅ Load Journal Entry (Axios)
+  // ===========================
   const loadJournalEntry = async (day) => {
     try {
       setIsLoading(true);
       const userId = getUserId();
+      if (!userId) return;
 
-      if (!userId) {
-        console.error("No user ID available for loading journal entry");
-        return;
-      }
+      const response = await api.get(`/api/journal/${currentWeek}/${day}`, {
+        params: { userId },
+      });
 
-      const response = await fetch(
-        `${API_BASE_URL}/journal/${currentWeek}/${day}?userId=${userId}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data) {
-          const content = data.data.content || "";
-          if (quillInstanceRef.current) {
-            quillInstanceRef.current.root.innerHTML =
-              content && content !== "<p>No Data available</p>"
-                ? content
-                : "<p>Start writing your journal entry...</p>";
-          }
-        }
-      } else if (response.status === 404) {
-        if (quillInstanceRef.current) {
-          quillInstanceRef.current.root.innerHTML =
-            "<p>Start writing your journal entry...</p>";
-        }
+      const { data } = response;
+      if (data.success && data.data && quillInstanceRef.current) {
+        const content = data.data.content || "";
+        quillInstanceRef.current.root.innerHTML =
+          content && content !== "<p>No Data available</p>"
+            ? content
+            : "<p>Start writing your journal entry...</p>";
       }
     } catch (error) {
       if (quillInstanceRef.current) {
@@ -325,27 +262,26 @@ const JournalPage = () => {
     }
   };
 
+  // ===========================
+  // ✅ Save Journal Entry (Axios)
+  // ===========================
   const saveJournalEntry = async () => {
     if (!quillInstanceRef.current) {
       setSaveStatus("Editor not ready");
-      setTimeout(() => setSaveStatus(""), 2000);
-      return;
+      return setTimeout(() => setSaveStatus(""), 2000);
     }
 
     const content = quillInstanceRef.current.root.innerHTML;
     const textContent = content.replace(/<[^>]*>/g, "").trim();
-
     if (!textContent || textContent === "Start writing your journal entry...") {
       setSaveStatus("Please write something before saving");
-      setTimeout(() => setSaveStatus(""), 2000);
-      return;
+      return setTimeout(() => setSaveStatus(""), 2000);
     }
 
     const userId = getUserId();
     if (!userId) {
       setSaveStatus("Authentication required");
-      setTimeout(() => setSaveStatus(""), 2000);
-      return;
+      return setTimeout(() => setSaveStatus(""), 2000);
     }
 
     try {
@@ -356,10 +292,10 @@ const JournalPage = () => {
         (j) => j.day === currentDay && j.exists
       );
 
-      const method = existingEntry ? "PUT" : "POST";
+      const method = existingEntry ? "put" : "post";
       const url = existingEntry
-        ? `${API_BASE_URL}/journal/${currentWeek}/${currentDay}`
-        : `${API_BASE_URL}/journal`;
+        ? `/api/journal/${currentWeek}/${currentDay}`
+        : `/api/journal`;
 
       const requestBody = {
         week: currentWeek,
@@ -370,25 +306,10 @@ const JournalPage = () => {
         characterCount: textContent.length,
       };
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestBody),
-      });
+      const response = await api[method](url, requestBody);
+      const data = response.data;
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error("Authentication failed");
-        }
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.error || "Failed to save");
-      }
+      if (!data.success) throw new Error(data.error || "Failed to save");
 
       setJournalView((prev) =>
         prev.map((j) =>
@@ -424,12 +345,18 @@ const JournalPage = () => {
     }
   };
 
+  // ===========================
+  // ✅ Switch Day
+  // ===========================
   const switchToDay = (day) => {
     if (!canAccessDay(day)) return;
     setCurrentDay(day);
     loadJournalEntry(day);
   };
 
+  // ===========================
+  // ✅ UI Layout (identical to yours)
+  // ===========================
   return (
     <div
       className={`fixed inset-0 pt-[60px] sm:pt-[70px] overflow-hidden ${
@@ -437,21 +364,21 @@ const JournalPage = () => {
       }`}
     >
       <div className="h-full grid grid-cols-1 lg:grid-cols-[35%_65%] xl:grid-cols-[40%_60%]">
-        {/* Left Side - Info Section */}
+        {/* Left Side */}
         <div
-          className={`hidden lg:flex flex-col justify-center items-center gap-3 md:gap-4 lg:gap-5 px-4 md:px-6 lg:px-8 py-4 overflow-y-auto ${
+          className={`hidden lg:flex flex-col justify-center items-center gap-4 px-8 py-6 ${
             theme === "light" ? "bg-white" : "bg-gray-900"
           }`}
         >
           <h1
-            className={`text-2xl md:text-3xl lg:text-4xl font-semibold text-left w-full ${
+            className={`text-3xl font-semibold ${
               theme === "light" ? "text-gray-800" : "text-white"
             }`}
           >
             Journal Writing
           </h1>
           <p
-            className={`text-sm md:text-base lg:text-lg leading-relaxed text-left w-full ${
+            className={`text-base text-left ${
               theme === "light" ? "text-gray-600" : "text-gray-400"
             }`}
           >
@@ -461,35 +388,31 @@ const JournalPage = () => {
           <img
             src="/Journal.png"
             alt="Journal Illustration"
-            className="w-full max-w-[300px] md:max-w-[400px] lg:max-w-[450px] object-contain"
+            className="w-full max-w-[400px]"
           />
         </div>
 
-        {/* Right Side - Editor Section */}
-        <div className="h-full flex flex-col p-3 sm:p-4 md:p-5 lg:p-6 overflow-hidden">
+        {/* Right Side */}
+        <div className="h-full flex flex-col p-5 overflow-hidden">
           <div
-            className={`h-full flex flex-col shadow-xl sm:shadow-2xl border sm:border-2 rounded-lg overflow-hidden ${
+            className={`h-full flex flex-col shadow-2xl border-2 rounded-lg overflow-hidden ${
               theme === "light"
-                ? "bg-white border-gray-200 sm:border-white"
+                ? "bg-white border-white"
                 : "bg-gray-800 border-gray-700"
             }`}
           >
-            {/* Header */}
-            <div className="bg-gradient-to-r from-orange-400 to-orange-500 text-white p-3 sm:p-4 flex-shrink-0">
-              <h1 className="text-lg sm:text-xl md:text-2xl font-bold">
+            <div className="bg-gradient-to-r from-orange-400 to-orange-500 text-white p-4">
+              <h1 className="text-xl font-bold">
                 Daily Journal - {currentDay}
               </h1>
-              <p className="text-xs sm:text-sm text-orange-100">
+              <p className="text-sm text-orange-100">
                 Week {currentWeek} of {new Date().getFullYear()}
               </p>
             </div>
 
-            {/* Editor Container */}
-            <div className="flex-1 flex flex-col p-3 sm:p-4 md:p-5 overflow-hidden">
-              {/* Day Selector and Save Button */}
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 sm:mb-4 flex-shrink-0">
-                {/* Day Buttons - Scrollable on mobile */}
-                <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-2 sm:pb-0 w-full sm:w-auto scrollbar-thin scrollbar-thumb-gray-300">
+            <div className="flex-1 flex flex-col p-4 overflow-hidden">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-4">
+                <div className="flex gap-2 overflow-x-auto pb-2 w-full sm:w-auto">
                   {[
                     "Monday",
                     "Tuesday",
@@ -505,20 +428,15 @@ const JournalPage = () => {
                         key={day}
                         onClick={() => switchToDay(day)}
                         disabled={!accessible}
-                        className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded text-xs sm:text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
+                        className={`px-3 py-1.5 rounded text-sm font-medium transition-all ${
                           currentDay === day
                             ? "bg-orange-400 text-white"
                             : accessible
                             ? theme === "light"
-                              ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                              : "bg-gray-700 text-gray-200 hover:bg-gray-600"
-                            : theme === "light"
-                            ? "bg-gray-100 text-gray-400 cursor-not-allowed opacity-50"
-                            : "bg-gray-800 text-gray-600 cursor-not-allowed opacity-50"
+                              ? "bg-gray-200 hover:bg-gray-300"
+                              : "bg-gray-700 hover:bg-gray-600"
+                            : "opacity-50 cursor-not-allowed"
                         }`}
-                        title={
-                          !accessible ? "Future days are not accessible" : ""
-                        }
                       >
                         {day.substring(0, 3)}
                       </button>
@@ -526,15 +444,13 @@ const JournalPage = () => {
                   })}
                 </div>
 
-                {/* Save Button */}
-                <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                <div className="flex items-center gap-3">
                   {saveStatus && (
                     <span
-                      className={`text-xs sm:text-sm font-medium truncate ${
+                      className={`text-sm font-medium ${
                         saveStatus.includes("success")
                           ? "text-green-600"
-                          : saveStatus.includes("Error") ||
-                            saveStatus.includes("error")
+                          : saveStatus.includes("Error")
                           ? "text-red-600"
                           : "text-blue-600"
                       }`}
@@ -545,17 +461,17 @@ const JournalPage = () => {
                   <button
                     onClick={saveJournalEntry}
                     disabled={isLoading || !canAccessDay(currentDay)}
-                    className="bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white font-semibold py-1.5 sm:py-2 px-3 sm:px-4 rounded-lg shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap"
+                    className="bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white font-semibold py-2 px-4 rounded-lg shadow-lg transition-all duration-200 disabled:opacity-50 flex items-center gap-2 text-sm"
                   >
                     {isLoading ? (
                       <>
-                        <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        <span className="hidden sm:inline">Saving...</span>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Saving...
                       </>
                     ) : (
                       <>
                         <svg
-                          className="w-3 h-3 sm:w-4 sm:h-4"
+                          className="w-4 h-4"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -567,24 +483,22 @@ const JournalPage = () => {
                             d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12"
                           />
                         </svg>
-                        <span>Save</span>
+                        Save
                       </>
                     )}
                   </button>
                 </div>
               </div>
 
-              {/* Quill Editor - Fills remaining space */}
               <div className="flex-1 overflow-hidden">
                 <div
                   ref={editorRef}
                   id="editor"
-                  className={`h-full border sm:border-2 rounded-lg ${
+                  className={`h-full border-2 rounded-lg ${
                     theme === "light"
                       ? "bg-white border-gray-200"
                       : "bg-gray-900 border-gray-700"
                   }`}
-                  style={{ minHeight: 0 }}
                 />
               </div>
             </div>

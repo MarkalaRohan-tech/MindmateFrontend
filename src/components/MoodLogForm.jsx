@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
-import axios from "axios";
 import { useAuth } from "../Context/AuthContext";
+import api from "../Utils/axiosInstance";
 
 const MoodLogForm = ({
   title,
@@ -12,6 +12,7 @@ const MoodLogForm = ({
   currentMoodTime,
 }) => {
   const { user } = useAuth();
+
   const moodOptions = [
     { id: 1, icon: "sentiment_sad", checkedClass: "peer-checked:text-red-400" },
     {
@@ -39,11 +40,8 @@ const MoodLogForm = ({
   useEffect(() => {
     const checkMoodLog = async () => {
       try {
-        const res = await axios.get(`/api/mood/check`, {
-          params: {
-            userId: user._id,
-            timeOfDay: currentMoodTime,
-          },
+        const res = await api.get(`/api/mood/check`, {
+          params: { userId: user._id, timeOfDay: currentMoodTime },
         });
 
         if (res.data?.moodValue >= 1) {
@@ -54,23 +52,34 @@ const MoodLogForm = ({
       }
     };
 
-    if (user?._id) {
-      checkMoodLog();
-    }
-  }, [user, currentMoodTime, setAlertVisible]);
+    if (user?._id) checkMoodLog();
+  }, [user?._id, currentMoodTime, setAlertVisible]);
 
   return (
     <form
       onSubmit={lockOption}
-      className="w-[100%] md:flex-1 flex border-2 border-white flex-col p-5 rounded-2xl shadow-lg "
+      className="w-[100%] md:flex-1 flex border-2 border-white flex-col p-5 rounded-2xl shadow-lg"
     >
       <h1 className="text-xl font-bold">{title}</h1>
       <p>Record Your mood</p>
 
       {alertVisible ? (
-        <div role="alert" className="mt-5 mb-5 alert alert-info">      
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="h-6 w-6 shrink-0 stroke-current">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        <div
+          role="alert"
+          className="mt-5 mb-5 alert alert-info flex items-center gap-3"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            className="h-6 w-6 shrink-0 stroke-current"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
           <span>{`${title.split(" ")[0]} mood logged!`}</span>
         </div>
@@ -86,7 +95,7 @@ const MoodLogForm = ({
                   value={id}
                   className="hidden peer"
                   onChange={moodChange}
-                  defaultChecked={id === 3}
+                  checked={mood === id} // 🔹 Controlled input
                 />
                 <span
                   style={{ fontSize: "48px" }}
@@ -97,7 +106,11 @@ const MoodLogForm = ({
               </label>
             ))}
           </div>
-          <button type="submit" className="moodLock btn bg-orange-400">
+          <button
+            type="submit"
+            className="moodLock btn bg-orange-400"
+            disabled={alertVisible} // optional: disable if already logged
+          >
             <b className="text-white">Submit</b>
           </button>
         </>

@@ -3,11 +3,11 @@ import React, { useState, useEffect } from "react";
 import "../App.css";
 import MusicPlayer from "../components/MusicPlayer";
 import SelfCareChart from "../components/SelfCareChart";
-import axios from "axios";
 import { useAuth } from "../Context/AuthContext";
 import { toast } from "react-toastify";
 import { SuccessToast, ErrorToast } from "../Utils/ReactToast";
 import "react-toastify/dist/ReactToastify.css";
+import api from "../Utils/axiosInstance";
 
 // --- Helpers ---
 const isSameUTCDate = (d1, d2) => {
@@ -53,7 +53,7 @@ const SelfCareList = () => {
     const fetchActivities = async () => {
       setLoading(true);
       try {
-        const res = await axios.get("/api/selfcare", {
+        const res = await api.get("/api/selfcare", {
           params: { userId: user._id },
           withCredentials: true,
         });
@@ -111,7 +111,7 @@ const SelfCareList = () => {
         ? `/api/selfcare/${id}/increment`
         : `/api/selfcare/${id}/decrement`;
 
-      const res = await axios.patch(
+      const res = await api.patch(
         endpoint,
         { userId: user._id },
         { withCredentials: true }
@@ -148,7 +148,7 @@ const SelfCareList = () => {
 
     setLoading(true);
     try {
-      const res = await axios.post(
+      const res = await api.post(
         "/api/selfcare",
         {
           title: title.trim(),
@@ -190,7 +190,7 @@ const SelfCareList = () => {
 
     setLoading(true);
     try {
-      const res = await axios.delete(`/api/selfcare/${id}`, {
+      const res = await api.delete(`/api/selfcare/${id}`, {
         params: { userId: user._id },
         withCredentials: true,
       });

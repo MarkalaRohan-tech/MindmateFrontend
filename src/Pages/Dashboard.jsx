@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useContext } from "react";
 import { NavLink } from "react-router-dom";
 import { Quote } from "lucide-react";
-import axios from "axios";
 import { ThemeContext } from "../Context/ThemeContext";
 import { useAuth } from "../Context/AuthContext";
+import api from "../Utils/axiosInstance";
 
 const Dashboard = () => {
   const [quote, setQuote] = useState(null);
@@ -16,7 +16,7 @@ const Dashboard = () => {
     const fetchDashboard = async () => {
       try {
         const userId = user?._id;
-        const res = await axios.get(`/api/dashboard/${userId}`);
+        const res = await api.get(`/api/dashboard/${userId}`);
         setDashboardData(res.data);
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
@@ -26,7 +26,7 @@ const Dashboard = () => {
     // Fetch Daily Quote
     const fetchQuote = async () => {
       try {
-        const res = await axios.get(
+        const res = await api.get(
           `https://api.allorigins.win/get?url=${encodeURIComponent(
             "https://zenquotes.io/api/today"
           )}`
@@ -202,7 +202,7 @@ const Dashboard = () => {
                 <ul className="space-y-3">
                   {dashboardData.badges.map((badge, index) => (
                     <li key={index}>
-                      <div className="border-2 border-white p-4 rounded-xl shadow-lg flex items-center gap-4 hover:shadow-xl transition-shadow">
+                      <div className=" ml-3 border-2 border-white p-4 rounded-xl shadow-lg flex items-center gap-4 hover:shadow-xl transition-shadow">
                         <div className="flex-shrink-0 rounded-full w-16 h-16 overflow-hidden flex justify-center items-center bg-orange-50">
                           <img
                             src={badge.logo}

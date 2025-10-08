@@ -1,8 +1,8 @@
-import axios from "axios";
 import { useState, useRef, useEffect, useContext } from "react";
 import { io } from "socket.io-client";
 import { useAuth } from "../Context/AuthContext";
 import { ThemeContext } from "../Context/ThemeContext";
+import api from "../Utils/axiosInstance";
 
 const API_BASE = "http://localhost:3000";
 
@@ -27,7 +27,7 @@ const PeerMessages = () => {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const res = await axios.get(`${API_BASE}/api/chat`);
+        const res = await api.get(`${API_BASE}/api/chat`);
         setMessages(res.data);
       } catch (err) {
         console.error("Failed to fetch messages:", err);
@@ -72,7 +72,7 @@ const PeerMessages = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`${API_BASE}/api/chat/${id}/${senderId}`);
+      await api.delete(`${API_BASE}/api/chat/${id}/${senderId}`);
       socket.emit("delete message", { messageId: id, userId: senderId });
     } catch (err) {
       console.error("Delete failed:", err);

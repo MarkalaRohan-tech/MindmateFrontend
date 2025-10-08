@@ -2,7 +2,7 @@ import React, { useContext, useState, useEffect } from "react";
 import { Line } from "react-chartjs-2";
 import { ThemeContext } from "../Context/ThemeContext";
 import { useAuth } from "../Context/AuthContext";
-import axios from "axios";
+import api from "../Utils/axiosInstance";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -61,7 +61,7 @@ const MoodTrendChart = ({ title = "", refreshKey }) => {
   const fetchTrends = async () => {
     if (!user?._id) return;
     try {
-      const res = await axios.get("/api/mood/trends", {
+      const res = await api.get("/api/mood/trends", {
         params: { userId: user._id },
       });
       if (!res.data) return;

@@ -63,7 +63,7 @@ const LoginRegister = () => {
                 onChange={handleChange}
                 placeholder="Enter your email"
                 required
-                className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-colors"
+                className="w-full text-black pl-10 pr-3 py-2.5 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-colors"
               />
             </div>
             <p className="mt-1 text-xs text-gray-600">
@@ -86,7 +86,7 @@ const LoginRegister = () => {
                 required
                 placeholder="Enter your password"
                 minLength="8"
-                className="w-full pl-10 pr-10 py-2.5 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-colors"
+                className="w-full text-black pl-10 pr-10 py-2.5 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-colors"
               />
               <button
                 type="button"

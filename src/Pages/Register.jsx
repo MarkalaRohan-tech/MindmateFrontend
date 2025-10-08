@@ -81,7 +81,7 @@ const Register = () => {
                     pattern="[A-Za-z][A-Za-z0-9\- .]{2,29}"
                     minLength="3"
                     maxLength="30"
-                    className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-colors"
+                    className="w-full text-black pl-10 pr-3 py-2.5 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-colors"
                   />
                 </div>
                 <p className="mt-1 text-xs text-gray-600">
@@ -100,7 +100,7 @@ const Register = () => {
                     onChange={handleChange}
                     placeholder="Email"
                     required
-                    className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-colors"
+                    className="w-full text-black pl-10 pr-3 py-2.5 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-colors"
                   />
                 </div>
                 <p className="mt-1 text-xs text-gray-600">
@@ -122,7 +122,7 @@ const Register = () => {
                     pattern="[0-9]{10}"
                     minLength="10"
                     maxLength="10"
-                    className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-colors tabular-nums"
+                    className="w-full text-black pl-10 pr-3 py-2.5 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-colors tabular-nums"
                   />
                 </div>
                 <p className="mt-1 text-xs text-gray-600">10 digits</p>
@@ -149,7 +149,7 @@ const Register = () => {
                     pattern="[A-Za-z][A-Za-z0-9\-]{2,29}"
                     minLength="3"
                     maxLength="30"
-                    className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-colors"
+                    className="w-full text-black pl-10 pr-3 py-2.5 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-colors"
                   />
                 </div>
                 <p className="mt-1 text-xs text-gray-600">
@@ -169,7 +169,7 @@ const Register = () => {
                     required
                     placeholder="Password"
                     minLength="8"
-                    className="w-full pl-10 pr-10 py-2.5 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-colors"
+                    className="w-full text-black pl-10 pr-10 py-2.5 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-colors"
                   />
                   <button
                     type="button"
@@ -200,7 +200,7 @@ const Register = () => {
                     required
                     placeholder="Confirm Password"
                     minLength="8"
-                    className="w-full pl-10 pr-10 py-2.5 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-colors"
+                    className="w-full text-black pl-10 pr-10 py-2.5 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-colors"
                   />
                   <button
                     type="button"

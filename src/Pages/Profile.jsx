@@ -21,9 +21,9 @@ import {
   Moon,
 } from "lucide-react";
 
-import axios from "axios";
 import { ThemeContext } from "../Context/ThemeContext";
 import { useAuth } from "../Context/AuthContext";
+import api from "../Utils/axiosInstance";
 
 const Profile = () => {
   const [profileData, setProfileData] = useState(null);
@@ -35,7 +35,7 @@ const Profile = () => {
     const fetchProfile = async () => {
       try {
         const userId = user?._id;
-        const res = await axios.get(`/api/profile/${userId}`);
+        const res = await api.get(`/api/profile/${userId}`);
         setProfileData(res.data);
       } catch (err) {
         console.error("Error fetching profile data:", err);
@@ -432,7 +432,7 @@ const Profile = () => {
         {/* RIGHT SIDE - Achievements */}
         <div className="w-full lg:w-1/3">
           <div
-            className={`border-2 p-4 sm:p-5 rounded-xl sm:rounded-2xl shadow-lg ${
+            className={`border-2 h-full p-4 sm:p-5 rounded-xl sm:rounded-2xl shadow-lg ${
               theme === "light"
                 ? "border-white bg-white"
                 : "border-gray-700 bg-gray-800"

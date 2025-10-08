@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { moodActivities } from "../Data";
 import "../App.css";
-import axios from "axios";
 import { SuccessToast, ErrorToast } from "../Utils/ReactToast";
 import { toast } from "react-toastify";
 import { useAuth } from "../Context/AuthContext";
 import MoodLogForm from "../components/MoodLogForm";
 import MoodTrendChart from "../Components/MoodTrendChart";
 import SuggestedActivity from "../components/SuggestedActivity";
+import api from "../Utils/axiosInstance";
 
 const MoodcheckIn = () => {
   const { user } = useAuth();
@@ -48,7 +48,7 @@ const MoodcheckIn = () => {
 
     const fetchInitialData = async () => {
       try {
-        const moodRes = await axios.get("/api/activity/getLatestMood", {
+        const moodRes = await api.get("/api/activity/getLatestMood", {
           params: { userId: user._id, timeOfDay: currentMoodTime },
         });
 
@@ -58,7 +58,7 @@ const MoodcheckIn = () => {
           setLastLoggedMood(latestMoodValue);
           setMood(latestMoodValue);
         } else {
-          const allTimeActivities = await axios
+          const allTimeActivities = await api
             .get("/api/activity/getAllUserActivities", {
               params: { userId: user._id, time: currentMoodTime },
             })
@@ -94,7 +94,7 @@ const MoodcheckIn = () => {
       try {
         setFetchError(null);
 
-        const res = await axios.get("/api/activity/getActivities", {
+        const res = await api.get("/api/activity/getActivities", {
           params: {
             userId: user._id,
             mood: moodToFetch,
@@ -135,7 +135,7 @@ const MoodcheckIn = () => {
     e.preventDefault();
 
     try {
-      const res = await axios.post("/api/mood/update", {
+      const res = await api.post("/api/mood/update", {
         moodValue: mood,
         timeOfDay: currentMoodTime,
         userId: user._id,
@@ -158,53 +158,67 @@ const MoodcheckIn = () => {
     }
   };
 
-  const fetchAISuggession = async () => {
-    let activities = [];
-    setLoadingAI(true);
+const fetchAISuggession = async () => {
+  let activities = [];
+  setLoadingAI(true);
 
-    try {
-      const aiRes = await axios.post("/api/ai/getSuggestion", {
-        prompt: `Suggest 4 unique and brainstorming short activities for mood: ${mood}, time of day: ${currentMoodTime}. Respond ONLY as a JSON array of objects like this: [{ "title": "Activity Title", "description": "Short description" }]`,
-      });
+  try {
+    const aiRes = await api.post("/api/ai/getSuggestion", {
+      prompt: `Suggest 4 unique and brainstorming short activities for mood: ${mood}, time of day: ${currentMoodTime}. Respond ONLY as a JSON array of objects like this: [{ "title": "Activity Title", "description": "Short description" }]`,
+    });
 
-      activities = aiRes.data.activities;
-
-      if (!Array.isArray(activities) || activities.length === 0) {
-        toast(<ErrorToast message="No activities suggested." />);
-        setLoadingAI(false);
-        return;
-      }
-    } catch (error) {
-      const errorMsg =
-        error.response?.data?.error || "AI suggestion fetch failed";
-      toast(<ErrorToast message={errorMsg} />);
+    if (aiRes.data.error) {
+      // AI returned an error string
+      toast(<ErrorToast message={`AI Error: ${aiRes.data.error}`} />);
       setLoadingAI(false);
       return;
     }
 
-    try {
-      const dbRes = await axios.post("/api/activity/addActivities", {
-        activities,
-        mood,
-        time: currentMoodTime,
-        userId: user._id,
-      });
+    activities = aiRes.data.activities;
 
-      setAiActivities(dbRes.data.activities);
-      toast(<SuccessToast message="Activities saved successfully" />);
-    } catch (error) {
-      const errorMsg =
-        error.response?.data?.error || "Saving activities to DB failed";
-      toast(<ErrorToast message={errorMsg} />);
+    if (!Array.isArray(activities) || activities.length === 0) {
+      toast(<ErrorToast message="No activities suggested." />);
+      setLoadingAI(false);
+      return;
     }
-
+  } catch (error) {
+    const errorMsg =
+      error.response?.data?.error ||
+      error.response?.data?.message ||
+      error.message ||
+      "AI suggestion fetch failed";
+    toast(<ErrorToast message={errorMsg} />);
     setLoadingAI(false);
-  };
+    return;
+  }
+
+  try {
+    const dbRes = await api.post("/api/activity/addActivities", {
+      activities,
+      mood,
+      time: currentMoodTime,
+      userId: user._id,
+    });
+
+    setAiActivities(dbRes.data.activities);
+    toast(<SuccessToast message="Activities saved successfully" />);
+  } catch (error) {
+    const errorMsg =
+      error.response?.data?.error ||
+      error.response?.data?.message ||
+      error.message ||
+      "Saving activities to DB failed";
+    toast(<ErrorToast message={errorMsg} />);
+  }
+
+  setLoadingAI(false);
+};
+
 
   const activityStatus = async (activityId, checked, index) => {
     if (activityId) {
       try {
-        await axios.post("/api/activity/toggle", {
+        await api.post("/api/activity/toggle", {
           activityId,
           completed: checked,
           userId: user._id,
