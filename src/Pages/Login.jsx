@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../Context/AuthContext";
 import { SuccessToast, ErrorToast } from "../Utils/ReactToast";
 import { toast } from "react-toastify";
+import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 
 const LoginRegister = () => {
   const { login } = useAuth();
@@ -12,6 +13,8 @@ const LoginRegister = () => {
     email: "",
     password: "",
   });
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -38,64 +41,83 @@ const LoginRegister = () => {
     }
   };
 
-
   return (
-    <div className="bg-[url(/buddhaPot.png)] md:bg-[url(/buddha.png)] w-full h-screen bg-cover bg-left xl:bg-center flex justify-center items-center">
-      <div className="rounded-2xl w-[90vw] lg:w-3/4 xl:w-1/2 h-auto bg-[rgba(255,255,255,0.6)] p-8 shadow-2xl">
-        <h2 className="text-3xl mb-8 text-black text-center font-bold">
-          Login
+    <div className="bg-[url(/buddhaPot.png)] md:bg-[url(/buddha.png)] w-full min-h-screen bg-cover bg-left xl:bg-center flex justify-center items-center p-4">
+      <div className="rounded-3xl w-full max-w-md bg-white/90 backdrop-blur-sm p-6 md:p-8 shadow-2xl my-4">
+        <h2 className="text-2xl md:text-4xl mb-4 md:mb-6 text-orange-400 text-center font-bold">
+          Welcome Back
         </h2>
 
-        {/* Login Form */}
-        <form
-          onSubmit={handleLogin}
-          className="flex flex-col justify-center items-center gap-4"
-        >
+        <form onSubmit={handleLogin} className="space-y-4">
           {/* Email */}
-          <label className="input validator w-full md:w-1/2">
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Email"
-              required
-            />
-          </label>
-          <p className="validator-hint text-sm text-gray-600">
-            <i className="fa-solid fa-circle-exclamation"></i>&nbsp;Enter a
-            valid email
-          </p>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Email Address
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Enter your email"
+                required
+                className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-colors"
+              />
+            </div>
+            <p className="mt-1 text-xs text-gray-600">
+              Enter a valid email address
+            </p>
+          </div>
 
           {/* Password */}
-          <label className="input validator w-full md:w-1/2">
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              placeholder="Password"
-              minLength="8"
-              title="Password must be at least 8 characters"
-            />
-          </label>
-          <p className="validator-hint text-sm text-gray-600">
-            Password must be at least 8 characters
-          </p>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Password
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                placeholder="Enter your password"
+                minLength="8"
+                className="w-full pl-10 pr-10 py-2.5 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-colors"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500 transition-colors"
+              >
+                {showPassword ? (
+                  <EyeOff className="w-4 cursor-pointer h-4" />
+                ) : (
+                  <Eye className="w-4 cursor-pointer h-4" />
+                )}
+              </button>
+            </div>
+            <p className="mt-1 text-xs text-gray-600">At least 8 characters</p>
+          </div>
 
           {/* Submit Button */}
-          <div className="flex flex-col justify-center items-center w-full">
+          <div className="flex flex-col items-center gap-3 pt-4">
             <button
               type="submit"
-              className="mt-4 py-2 px-6 rounded-xl w-1/3 cursor-pointer bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white font-bold hover:from-orange-400 hover:to-orange-500 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 cursor-pointer"
             >
               Login
             </button>
-            <br />
-            <p className="text-black">
-              Don&apos;t have an account?{" "}
-              <NavLink to="/register" style={{ textDecoration: "underline" }}>
+
+            <p className="text-gray-700">
+              Don't have an account?{" "}
+              <NavLink
+                to="/register"
+                className="text-orange-400 font-semibold hover:text-orange-500 underline"
+              >
                 Register
               </NavLink>
             </p>

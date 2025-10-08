@@ -4,9 +4,11 @@ import React, {
   useCallback,
   useMemo,
   useRef,
+  useContext,
 } from "react";
+import { ThemeContext } from "../Context/ThemeContext";
 
-// Custom hook to manage audio
+// 🎧 Custom Hook: Audio Manager
 const useAudioManager = () => {
   const audioRef = useRef(new Audio());
   const [isLoaded, setIsLoaded] = useState(false);
@@ -44,16 +46,18 @@ const useAudioManager = () => {
   return { audioRef, isLoaded, isLoading, loadAudio, cleanup };
 };
 
+// 🎵 Main Component
 const MusicPlayer = () => {
   const [musicTrack, setMusicTrack] = useState([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [visibleTracks, setVisibleTracks] = useState(8);
+  const { theme } = useContext(ThemeContext);
 
   const { audioRef, isLoaded, isLoading, loadAudio, cleanup } =
     useAudioManager();
 
-  // Fetch API on mount (Jamendo)
+  // Fetch music from Jamendo
   useEffect(() => {
     const fetchMusic = async () => {
       try {
@@ -64,7 +68,7 @@ const MusicPlayer = () => {
 
         const formatted = data.results.map((track, i) => ({
           title: track.name || `Relaxing Track ${i + 1}`,
-          src: track.audio, // MP3 stream
+          src: track.audio,
           cover: track.album_image || "https://via.placeholder.com/150",
           size: track.duration
             ? `${Math.round(track.duration / 60)} min`
@@ -85,22 +89,15 @@ const MusicPlayer = () => {
       const wasPlaying = isPlaying;
       loadAudio(musicTrack[currentTrackIndex].src);
 
-      // If we were playing before switching tracks, continue playing the new track
       if (wasPlaying) {
-        // We need to wait for the audio to be loaded before playing
         const playWhenReady = () => {
           if (audioRef.current && audioRef.current.readyState >= 3) {
             audioRef.current.play().catch((error) => {
-              console.error("Failed to play audio:", error);
+              console.error("Failed to play:", error);
               setIsPlaying(false);
             });
-          } else {
-            // If not ready yet, try again after a short delay
-            setTimeout(playWhenReady, 100);
-          }
+          } else setTimeout(playWhenReady, 100);
         };
-
-        // Small delay to ensure audio is properly loaded
         setTimeout(playWhenReady, 50);
       }
     }
@@ -111,25 +108,21 @@ const MusicPlayer = () => {
   const togglePlay = useCallback(() => {
     if (!audioRef.current || !isLoaded) return;
 
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play().catch((error) => {
-        console.error("Failed to play audio:", error);
-      });
-    }
+    if (isPlaying) audioRef.current.pause();
+    else audioRef.current.play().catch(console.error);
+
     setIsPlaying(!isPlaying);
   }, [isPlaying, isLoaded]);
 
   const playNext = useCallback(() => {
-    setCurrentTrackIndex((prevIndex) =>
-      prevIndex === musicTrack.length - 1 ? 0 : prevIndex + 1
+    setCurrentTrackIndex((prev) =>
+      prev === musicTrack.length - 1 ? 0 : prev + 1
     );
   }, [musicTrack]);
 
   const playPrevious = useCallback(() => {
-    setCurrentTrackIndex((prevIndex) =>
-      prevIndex === 0 ? musicTrack.length - 1 : prevIndex - 1
+    setCurrentTrackIndex((prev) =>
+      prev === 0 ? musicTrack.length - 1 : prev - 1
     );
   }, [musicTrack]);
 
@@ -164,56 +157,85 @@ const MusicPlayer = () => {
             index={index}
             isActive={index === currentTrackIndex}
             onSelect={handleTrackSelect}
+            theme={theme}
           />
         )),
-    [visibleTracks, currentTrackIndex, musicTrack, handleTrackSelect]
+    [visibleTracks, currentTrackIndex, musicTrack, handleTrackSelect, theme]
   );
 
   return (
-    <div className="w-[95%] mx-auto bg-gradient-to-br from-white via-orange-50 to-white rounded-3xl shadow-2xl overflow-hidden border-2 border-orange-100">
-      {/* Modern Player Header */}
-      <div className="bg-orange-400/10 backdrop-blur-sm p-6 border-b border-orange-200/30">
+    <div
+      className={`w-[95%] mx-auto rounded-3xl shadow-2xl overflow-hidden border transition-colors duration-300 ${
+        theme === "light"
+          ? "bg-gradient-to-br from-white via-orange-50 to-white border-orange-100"
+          : "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border-gray-700"
+      }`}
+    >
+      {/* 🎧 Header */}
+      <div
+        className={`p-6 border-b backdrop-blur-sm transition-colors duration-300 ${
+          theme === "light"
+            ? "bg-orange-400/10 border-orange-200/30"
+            : "bg-gray-800/40 border-gray-700"
+        }`}
+      >
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-4">
             <div className="relative">
               <img
-                src={
-                  memoizedCurrentTrack.cover || "https://via.placeholder.com/60"
-                }
+                src={memoizedCurrentTrack.cover}
                 alt="Album art"
-                className="w-16 h-16 rounded-2xl object-cover shadow-lg ring-2 ring-orange-200"
+                className="w-16 h-16 rounded-2xl object-cover shadow-lg ring-2 ring-orange-300"
               />
               {isPlaying && (
                 <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-orange-400 to-orange-500 opacity-75 blur animate-pulse"></div>
               )}
             </div>
+
             <div className="flex-1 min-w-0">
-              <h3 className="text-orange-900 font-semibold text-lg truncate">
+              <h3
+                className={`font-semibold text-lg truncate ${
+                  theme === "light" ? "text-orange-900" : "text-orange-100"
+                }`}
+              >
                 {memoizedCurrentTrack.title || "Loading..."}
               </h3>
-              <p className="text-orange-600 text-sm">
+              <p
+                className={`text-sm ${
+                  theme === "light" ? "text-orange-600" : "text-orange-400"
+                }`}
+              >
                 {memoizedCurrentTrack.size || "Unknown"}
               </p>
             </div>
           </div>
+
           <div className="flex items-center space-x-1">
             <div
               className={`w-2 h-2 rounded-full ${
                 isPlaying ? "bg-orange-500 animate-pulse" : "bg-gray-400"
               }`}
             ></div>
-            <span className="text-xs text-orange-700">
+            <span
+              className={`text-xs ${
+                theme === "light" ? "text-orange-700" : "text-gray-400"
+              }`}
+            >
               {isPlaying ? "Playing" : "Paused"}
             </span>
           </div>
         </div>
 
-        {/* Control Buttons */}
+        {/* ▶️ Controls */}
         <div className="flex items-center justify-center space-x-6 mt-6">
           <button
             onClick={playPrevious}
             disabled={isLoading}
-            className="p-3 rounded-full bg-orange-100 hover:bg-orange-200 transition-all duration-200 text-orange-600 disabled:opacity-50 shadow-md"
+            className={`p-3 rounded-full transition-all shadow-md ${
+              theme === "light"
+                ? "bg-orange-100 hover:bg-orange-200 text-orange-600"
+                : "bg-gray-700 hover:bg-gray-600 text-orange-300"
+            }`}
           >
             <i className="fa-solid fa-backward text-lg"></i>
           </button>
@@ -221,7 +243,7 @@ const MusicPlayer = () => {
           <button
             onClick={togglePlay}
             disabled={!isLoaded || isLoading}
-            className="p-4 rounded-full bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 transition-all duration-200 text-white shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:transform-none"
+            className="p-4 rounded-full bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white shadow-lg transform hover:scale-105 transition-all disabled:opacity-50"
           >
             {isLoading ? (
               <i className="fa-solid fa-spinner fa-spin text-xl"></i>
@@ -235,7 +257,11 @@ const MusicPlayer = () => {
           <button
             onClick={playNext}
             disabled={isLoading}
-            className="p-3 rounded-full bg-orange-100 hover:bg-orange-200 transition-all duration-200 text-orange-600 disabled:opacity-50 shadow-md"
+            className={`p-3 rounded-full transition-all shadow-md ${
+              theme === "light"
+                ? "bg-orange-100 hover:bg-orange-200 text-orange-600"
+                : "bg-gray-700 hover:bg-gray-600 text-orange-300"
+            }`}
           >
             <i className="fa-solid fa-forward text-lg"></i>
           </button>
@@ -252,31 +278,50 @@ const MusicPlayer = () => {
               className="w-2 h-2 bg-orange-400 rounded-full animate-bounce"
               style={{ animationDelay: "0.2s" }}
             ></div>
-            <span className="text-orange-700 text-sm ml-3">
+            <span
+              className={`text-sm ml-3 ${
+                theme === "light" ? "text-orange-700" : "text-gray-400"
+              }`}
+            >
               Loading audio...
             </span>
           </div>
         )}
       </div>
 
-      {/* Modern Playlist */}
-      <div className="bg-white/80 backdrop-blur-sm">
-        <div className="px-6 py-4 border-b border-orange-200">
-          <h4 className="text-orange-900 font-semibold text-lg flex items-center">
-            <i className="fa-solid fa-music mr-2 text-orange-500"></i>
-            Playlist
+      {/* 🎶 Playlist */}
+      <div
+        className={`backdrop-blur-sm transition-colors duration-300 ${
+          theme === "light"
+            ? "bg-white/80 border-orange-200"
+            : "bg-gray-900/60 border-gray-700"
+        }`}
+      >
+        <div
+          className={`px-6 py-4 border-b ${
+            theme === "light"
+              ? "border-orange-200"
+              : "border-gray-700 text-orange-100"
+          }`}
+        >
+          <h4 className="font-semibold text-lg flex items-center">
+            <i className="fa-solid fa-music mr-2 text-orange-500"></i> Playlist
           </h4>
         </div>
 
         <div
-          className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-orange-300 scrollbar-track-transparent"
+          className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-orange-400 scrollbar-track-transparent"
           onScroll={handleScroll}
         >
           <div className="px-4 py-2">
             {trackList}
             {visibleTracks < musicTrack.length && (
               <div className="text-center py-4">
-                <div className="inline-flex items-center text-orange-500 text-sm">
+                <div
+                  className={`inline-flex items-center text-sm ${
+                    theme === "light" ? "text-orange-500" : "text-orange-400"
+                  }`}
+                >
                   <div className="w-1 h-1 bg-orange-400 rounded-full animate-pulse mr-2"></div>
                   Scroll to load more tracks
                 </div>
@@ -289,14 +334,16 @@ const MusicPlayer = () => {
   );
 };
 
-// Modern Track Item component
-const TrackItem = React.memo(({ audio, index, isActive, onSelect }) => (
+// 🎵 Individual Track Item
+const TrackItem = React.memo(({ audio, index, isActive, onSelect, theme }) => (
   <div
     onClick={() => onSelect(index)}
-    className={`group cursor-pointer rounded-xl p-3 mb-2 transition-all duration-200 hover:bg-orange-50 ${
+    className={`group cursor-pointer rounded-xl p-3 mb-2 transition-all ${
       isActive
-        ? "bg-gradient-to-r from-orange-100 to-orange-50 border border-orange-300"
-        : "hover:bg-orange-25"
+        ? "bg-gradient-to-r from-orange-100/80 to-orange-50 border border-orange-300"
+        : theme === "light"
+        ? "hover:bg-orange-50"
+        : "hover:bg-gray-800 border-gray-700"
     }`}
   >
     <div className="flex items-center space-x-3">
@@ -319,7 +366,9 @@ const TrackItem = React.memo(({ audio, index, isActive, onSelect }) => (
           className={`font-medium text-sm truncate transition-colors ${
             isActive
               ? "text-orange-800"
-              : "text-gray-800 group-hover:text-orange-700"
+              : theme === "light"
+              ? "text-gray-800 group-hover:text-orange-700"
+              : "text-gray-300 group-hover:text-orange-400"
           }`}
         >
           {audio.title}
@@ -328,7 +377,9 @@ const TrackItem = React.memo(({ audio, index, isActive, onSelect }) => (
           className={`text-xs truncate transition-colors ${
             isActive
               ? "text-orange-600"
-              : "text-gray-500 group-hover:text-orange-500"
+              : theme === "light"
+              ? "text-gray-500 group-hover:text-orange-500"
+              : "text-gray-400 group-hover:text-orange-300"
           }`}
         >
           {audio.size}

@@ -11,15 +11,14 @@ import SuggestedActivity from "../components/SuggestedActivity";
 
 const MoodcheckIn = () => {
   const { user } = useAuth();
-  const [mood, setMood] = useState(3); // 1-5 numeric
-  const [lastLoggedMood, setLastLoggedMood] = useState(null); // Track last logged mood
+  const [mood, setMood] = useState(3);
+  const [lastLoggedMood, setLastLoggedMood] = useState(null);
   const [alertVisible, setAlertVisible] = useState(false);
   const [aiActivities, setAiActivities] = useState([]);
   const [loadingAI, setLoadingAI] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0); // chart refresh trigger
+  const [refreshKey, setRefreshKey] = useState(0);
   const [fetchError, setFetchError] = useState(null);
 
-  // figure out time of day
   const hours = new Date().getHours();
   const currentMoodTime =
     hours >= 5 && hours <= 11
@@ -28,7 +27,6 @@ const MoodcheckIn = () => {
       ? "afternoon"
       : "evening";
 
-  // mood label mapping
   const moodMap = {
     1: "sad",
     2: "dissatisfied",
@@ -45,13 +43,11 @@ const MoodcheckIn = () => {
     setMood(newMood);
   };
 
-  // ✅ INITIAL LOAD - Get latest mood and set up the mood state properly
   useEffect(() => {
     if (!user?._id) return;
 
     const fetchInitialData = async () => {
       try {
-        // First, get the latest mood
         const moodRes = await axios.get("/api/activity/getLatestMood", {
           params: { userId: user._id, timeOfDay: currentMoodTime },
         });
@@ -59,12 +55,9 @@ const MoodcheckIn = () => {
         const latestMoodValue = moodRes.data.mood;
 
         if (latestMoodValue !== null) {
-          // Found previous mood - use it
           setLastLoggedMood(latestMoodValue);
-          setMood(latestMoodValue); // Set the slider to match the last logged mood
+          setMood(latestMoodValue);
         } else {
-          // No previous mood - check if there are ANY activities for this user and time
-          // Try to find activities for any mood to see what was last used
           const allTimeActivities = await axios
             .get("/api/activity/getAllUserActivities", {
               params: { userId: user._id, time: currentMoodTime },
@@ -72,33 +65,29 @@ const MoodcheckIn = () => {
             .catch(() => null);
 
           if (allTimeActivities?.data?.activities?.length > 0) {
-            // Found activities, use the mood from the most recent activity
             const mostRecentActivity = allTimeActivities.data.activities[0];
             const inferredMood = mostRecentActivity.mood;
             setLastLoggedMood(inferredMood);
             setMood(inferredMood);
           } else {
-            // Truly new user or new time period
             setLastLoggedMood(null);
-            setMood(3); // Keep default
+            setMood(3);
           }
         }
       } catch (err) {
         setLastLoggedMood(null);
-        setMood(3); // Fallback to default
+        setMood(3);
       }
     };
 
     fetchInitialData();
   }, [user?._id, currentMoodTime]);
 
-  // ✅ FETCH ACTIVITIES based on the correct mood
   useEffect(() => {
     if (!user?._id) {
       return;
     }
 
-    // Determine which mood to use for fetching activities
     const moodToFetch = lastLoggedMood !== null ? lastLoggedMood : mood;
 
     const fetchActivities = async () => {
@@ -129,7 +118,6 @@ const MoodcheckIn = () => {
         setFetchError(errorMessage);
         setAiActivities([]);
 
-        // Only show toast for non-404 errors
         if (err.response?.status !== 404) {
           toast(<ErrorToast message={errorMessage} />);
         }
@@ -137,14 +125,12 @@ const MoodcheckIn = () => {
     };
 
     fetchActivities();
-  }, [user?._id, lastLoggedMood, mood, currentMoodTime]); // Include mood in dependencies
+  }, [user?._id, lastLoggedMood, mood, currentMoodTime]);
 
-  // Debug log when activities change
   useEffect(() => {
     // Remove debug logging
   }, [aiActivities]);
 
-  // save mood + fetch activities
   const lockOption = async (e) => {
     e.preventDefault();
 
@@ -156,13 +142,13 @@ const MoodcheckIn = () => {
       });
 
       if (res.status === 200) {
-        setLastLoggedMood(mood); // Update the last logged mood
+        setLastLoggedMood(mood);
         toast(<SuccessToast message="Mood updated successfully" />);
         setAlertVisible(true);
 
         await fetchAISuggession();
 
-        setRefreshKey((prev) => prev + 1); // refresh chart
+        setRefreshKey((prev) => prev + 1);
       } else {
         toast(<ErrorToast message="Mood update failed" />);
       }
@@ -172,7 +158,6 @@ const MoodcheckIn = () => {
     }
   };
 
-  // ask AI and save to DB
   const fetchAISuggession = async () => {
     let activities = [];
     setLoadingAI(true);
@@ -216,7 +201,6 @@ const MoodcheckIn = () => {
     setLoadingAI(false);
   };
 
-  // ✅ toggle activity completion
   const activityStatus = async (activityId, checked, index) => {
     if (activityId) {
       try {
@@ -237,7 +221,6 @@ const MoodcheckIn = () => {
         toast(<ErrorToast message={errorMsg} />);
       }
     } else {
-      // local fallback only
       const newList = (
         aiActivities.length > 0 ? aiActivities : fallbackActivities
       ).map((a, i) => (i === index ? { ...a, completed: checked } : a));
@@ -245,34 +228,32 @@ const MoodcheckIn = () => {
     }
   };
 
-  // Debug what we're showing in SuggestedActivity
   const activitiesToShow =
     aiActivities && aiActivities.length > 0
-      ? aiActivities // ✅ from DB
+      ? aiActivities
       : !user?._id
       ? fallbackActivities
-      : []; // only fallback for new users
+      : [];
 
   const completedCount = activitiesToShow.filter((a) => a.completed).length;
 
   return (
-    <div className="w-[100vw] h-[100vh] px-5 pt-[70px] overflow-x-hidden">
+    <div className="w-full min-h-screen px-3 md:px-6 pt-[70px] pb-8 overflow-x-hidden">
       <h1 className="text-2xl md:text-4xl font-semibold">Your Mood Journey</h1>
       <p className="mt-3 mb-3">
         Explore your mood history and gain insights into your emotional pattern
         over time. <br /> Take Control of your well-being.
       </p>
 
-      {/* Show error if fetching activities failed */}
       {fetchError && (
         <div className="border-2 border-red-300 bg-red-50 text-red-600 p-3 rounded-2xl mb-4 shadow-lg">
           <span>⚠️ {fetchError}</span>
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row justify-center gap-2 items-start w-full max-w-full mt-5">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 max-w-[1600px] mx-auto mt-5">
         {/* Left side: mood log + suggestions */}
-        <div className="w-full lg:w-1/3 flex flex-col justify-start items-center h-full gap-2 mb-5">
+        <div className="lg:col-span-1 flex flex-col gap-4">
           {/* Mood Log Form Container */}
           <div className="w-full border-2 border-white rounded-2xl shadow-lg p-5">
             <MoodLogForm
@@ -304,7 +285,7 @@ const MoodcheckIn = () => {
                 ({completedCount} out of {activitiesToShow.length})
               </span>
             </p>
-            <div className="w-56 h-4 bg-orange-200 rounded-full overflow-hidden mt-2 mb-4">
+            <div className="w-full h-4 bg-orange-200 rounded-full overflow-hidden mt-2 mb-4">
               <div
                 className="h-full bg-orange-400 transition-all duration-500 ease-in-out"
                 style={{
@@ -325,17 +306,17 @@ const MoodcheckIn = () => {
                 </p>
               </div>
             ) : (
-              <div className="h-64 overflow-y-scroll">
+              <div className="max-h-[400px] overflow-y-auto">
                 {activitiesToShow.length === 0 ? (
                   <p className="text-center text-orange-400 p-4">
                     No activities have been added
                   </p>
                 ) : (
-                  <ul className="space-y-2">
+                  <ul className="space-y-2 m-4">
                     {activitiesToShow.map((activity, index) => (
-                      <li className="m-2" key={activity._id || index}>
-                        <div className="p-3 grid grid-cols-[15%_90%] rounded-2xl shadow-lg border-2 border-white">
-                          <div className="flex justify-center items-center">
+                      <li key={activity._id || index}>
+                        <div className="p-3 flex items-start gap-3 rounded-2xl shadow-lg border-2 border-white">
+                          <div className="flex justify-center items-center pt-1">
                             <input
                               type="checkbox"
                               className="w-6 h-6 accent-orange-400 cursor-pointer"
@@ -350,7 +331,7 @@ const MoodcheckIn = () => {
                               disabled={loadingAI}
                             />
                           </div>
-                          <div className="flex flex-col gap-1">
+                          <div className="flex flex-col gap-1 flex-1">
                             <p className="text-orange-400 font-semibold">
                               {activity.title}
                             </p>
@@ -369,8 +350,8 @@ const MoodcheckIn = () => {
         </div>
 
         {/* Right side: chart */}
-        <div className="w-full lg:w-2/3">
-          <div className="w-full border-2 border-white rounded-2xl shadow-lg p-5 h-fit">
+        <div className="lg:col-span-2">
+          <div className="w-full border-2 border-white rounded-2xl shadow-lg p-5 h-full">
             <h2 className="text-xl font-bold mb-3">
               Weekly{" "}
               {currentMoodTime[0].toUpperCase() + currentMoodTime.slice(1)} Mood

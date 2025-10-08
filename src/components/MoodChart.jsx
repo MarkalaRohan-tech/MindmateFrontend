@@ -1,4 +1,3 @@
-// src/Components/MoodTrendChart.jsx
 import React, { useContext, useState, useEffect } from "react";
 import { Line } from "react-chartjs-2";
 import { ThemeContext } from "../Context/ThemeContext";
@@ -32,6 +31,7 @@ const MoodTrendChart = ({ title = "", refreshKey }) => {
   const [view, setView] = useState("weekly");
   const [weeklyData, setWeeklyData] = useState(null);
   const [monthlyData, setMonthlyData] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
 
   // Fallback empty dataset
   const emptyData = {
@@ -46,6 +46,16 @@ const MoodTrendChart = ({ title = "", refreshKey }) => {
       },
     ],
   };
+
+  // Handle window resize for responsive chart options
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Fetch weekly & monthly trends
   const fetchTrends = async () => {
@@ -85,34 +95,90 @@ const MoodTrendChart = ({ title = "", refreshKey }) => {
   const options = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: { legend: { display: true } },
-    scales: { y: { min: 0, max: 6, ticks: { stepSize: 1 } } },
+    plugins: {
+      legend: {
+        display: true,
+        position: isMobile ? 'bottom' : 'top',
+        labels: {
+          padding: isMobile ? 8 : 10,
+          font: {
+            size: isMobile ? 10 : 12,
+          },
+          boxWidth: isMobile ? 12 : 20,
+          usePointStyle: true,
+        },
+      },
+      tooltip: {
+        titleFont: {
+          size: isMobile ? 11 : 13,
+        },
+        bodyFont: {
+          size: isMobile ? 10 : 12,
+        },
+        padding: isMobile ? 6 : 10,
+      },
+    },
+    scales: {
+      y: {
+        min: 0,
+        max: 6,
+        ticks: {
+          stepSize: 1,
+          font: {
+            size: isMobile ? 9 : 11,
+          },
+        },
+        grid: {
+          color: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+        },
+      },
+      x: {
+        ticks: {
+          font: {
+            size: isMobile ? 9 : 11,
+          },
+          maxRotation: isMobile ? 45 : 0,
+          minRotation: isMobile ? 45 : 0,
+        },
+        grid: {
+          display: false,
+        },
+      },
+    },
   };
 
   return (
     <div
-      className={`w-full rounded-xl shadow-md p-5 ${
+      className={`w-full rounded-xl shadow-md p-3 sm:p-5 ${
         theme === "dark"
           ? "bg-gradient-to-br from-gray-800 to-gray-900 text-white"
           : "bg-gradient-to-br from-[#f3f4f6] to-white text-black"
       }`}
     >
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mb-4">
+        <h2 className="text-lg sm:text-xl font-bold">
           {title || "Mood Trends Over Time"}
         </h2>
-        <div className="flex gap-2 text-sm">
+        <div className="flex gap-2 text-xs sm:text-sm">
           <button
-            className={`btn btn-sm ${
-              view === "weekly" ? "btn-active" : "btn-ghost"
+            className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-medium transition-all duration-200 ${
+              view === "weekly"
+                ? "bg-orange-400 text-white shadow-md"
+                : theme === "dark"
+                ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
             }`}
             onClick={() => setView("weekly")}
           >
             Weekly
           </button>
           <button
-            className={`btn btn-sm ${
-              view === "monthly" ? "btn-active" : "btn-ghost"
+            className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-medium transition-all duration-200 ${
+              view === "monthly"
+                ? "bg-orange-400 text-white shadow-md"
+                : theme === "dark"
+                ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
             }`}
             onClick={() => setView("monthly")}
           >
@@ -121,7 +187,7 @@ const MoodTrendChart = ({ title = "", refreshKey }) => {
         </div>
       </div>
 
-      <div className="h-[150px] md:h-[300px]">
+      <div className="h-[200px] sm:h-[250px] md:h-[300px] lg:h-[350px]">
         <Line
           data={
             view === "weekly"
@@ -129,11 +195,11 @@ const MoodTrendChart = ({ title = "", refreshKey }) => {
               : monthlyData || emptyData
           }
           options={options}
-          key={view} // ensure new instance when view changes
+          key={`${view}-${isMobile}`} // Ensure re-render on view or screen size change
         />
       </div>
 
-      <div className="mt-4 text-sm text-gray-600">
+      <div className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600">
         <p>Mood scores range from 1 (Challenging) to 5 (Excellent).</p>
       </div>
     </div>

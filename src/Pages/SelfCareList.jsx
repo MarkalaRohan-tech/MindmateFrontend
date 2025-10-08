@@ -1,3 +1,4 @@
+// File: SelfCareList.jsx
 import React, { useState, useEffect } from "react";
 import "../App.css";
 import MusicPlayer from "../components/MusicPlayer";
@@ -19,16 +20,14 @@ const isSameUTCDate = (d1, d2) => {
   );
 };
 
-// Weekly count for last 7 days including today
 const computeWeeklyCount = (performedDates = []) => {
   const today = new Date();
   const start = new Date(today);
   start.setUTCHours(0, 0, 0, 0);
-  start.setUTCDate(start.getUTCDate() - 6); // last 7 days
+  start.setUTCDate(start.getUTCDate() - 6);
   return performedDates.filter((d) => new Date(d) >= start).length;
 };
 
-// Transform raw backend activity data
 const transformActivity = (activity) => {
   const performedDates = activity.performedDates || [];
   return {
@@ -38,7 +37,6 @@ const transformActivity = (activity) => {
   };
 };
 
-// --- Component ---
 const SelfCareList = () => {
   const { user } = useAuth();
   const [title, setTitle] = useState("");
@@ -49,7 +47,6 @@ const SelfCareList = () => {
 
   const completedCount = checkedActivities.size;
 
-  // --- Fetch Activities ---
   useEffect(() => {
     if (!user?._id) return;
 
@@ -77,7 +74,6 @@ const SelfCareList = () => {
     fetchActivities();
   }, [user]);
 
-  // --- Auto-reset checkboxes at new day ---
   useEffect(() => {
     const timer = setInterval(() => {
       setSelfCareActivities((prev) =>
@@ -97,11 +93,10 @@ const SelfCareList = () => {
             .map((a) => a._id)
         )
       );
-    }, 60 * 1000); // every 1 min
+    }, 60 * 1000);
     return () => clearInterval(timer);
   }, [selfCareActivities]);
 
-  // --- Toggle completion ---
   const activityStatus = async (e, id) => {
     const isChecked = e.target.checked;
     if (!user?._id) {
@@ -144,7 +139,6 @@ const SelfCareList = () => {
     }
   };
 
-  // --- Add Activity ---
   const addActivity = async (e) => {
     e.preventDefault();
     if (!user?._id)
@@ -164,11 +158,10 @@ const SelfCareList = () => {
         { withCredentials: true }
       );
 
-      // ✅ Correctly handle backend response
       const activitiesArray = Array.isArray(res.data.activities)
         ? res.data.activities
         : res.data.activity
-        ? [res.data.activity] // wrap single object in array
+        ? [res.data.activity]
         : [];
 
       const activities = activitiesArray.map(transformActivity);
@@ -188,8 +181,6 @@ const SelfCareList = () => {
     }
   };
 
-
-  // --- Delete Activity ---
   const deleteActivity = async (id) => {
     if (!user?._id) {
       toast(<ErrorToast message="User not authenticated" />);
@@ -204,7 +195,6 @@ const SelfCareList = () => {
         withCredentials: true,
       });
 
-      // ✅ Correctly handle backend response
       const activitiesArray = Array.isArray(res.data.activities)
         ? res.data.activities
         : res.data.activity
@@ -227,51 +217,61 @@ const SelfCareList = () => {
     }
   };
 
-
-  // --- Render ---
   return (
-    <div className="w-[100vw] h-[100vh] px-5 pt-[70px] overflow-x-hidden">
-      <h1 className="text-2xl md:text-4xl font-semibold">Self-Care Tracking</h1>
-      <p className="mt-3 mb-3">
+    <div className="w-full min-h-screen px-3 sm:px-4 md:px-6 pt-[70px] pb-6 sm:pb-8 overflow-x-hidden">
+      <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold">
+        Self-Care Tracking
+      </h1>
+      <p className="mt-2 sm:mt-3 mb-3 sm:mb-4 text-sm sm:text-base text-gray-600">
         Monitor your self-care activities. Set goals, and track your progress.
-        <br />
+        <br className="hidden sm:block" />
         Take control of your well-being.
       </p>
 
-      <div className="morningMood flex flex-col justify-center gap-2 items-start w-full max-w-full mt-5">
-        <div className="w-full grid grid-cols-2 gap-2">
-          {/* Left Column */}
-          <div className="w-[100%] md:flex-1 flex border-2 border-white flex-col p-3 rounded-2xl shadow-lg">
-            <h1 className="text-xl font-bold">Self-Care Activities</h1>
-            <p className="font-semibold text-2xl my-5">Add New Activity:</p>
-            <form onSubmit={addActivity}>
-              <label>
-                <b>Title</b>
-              </label>
-              <input
-                type="text"
-                placeholder="Enter Title"
-                className="input w-[90%]"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-                disabled={loading}
-              />
-              <label className="mt-2">
-                <b>Description</b>
-              </label>
-              <textarea
-                placeholder="Enter description for activity"
-                className="textarea w-[90%]"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                required
-                disabled={loading}
-              />
-              <div className="flex justify-center items-center w-[90%] mt-2">
+      <div className="flex flex-col gap-3 sm:gap-4 md:gap-5 w-full max-w-[1600px] mx-auto mt-4 sm:mt-5">
+        <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-5">
+          <div className="w-full flex border-2 border-white flex-col p-4 sm:p-5 rounded-xl sm:rounded-2xl shadow-lg">
+            <h1 className="text-lg sm:text-xl font-bold">
+              Self-Care Activities
+            </h1>
+
+            <p className="font-semibold text-lg sm:text-xl md:text-2xl my-3 sm:my-4">
+              Add New Activity:
+            </p>
+            <form onSubmit={addActivity} className="space-y-3 sm:space-y-4">
+              <div>
+                <label className="block text-sm sm:text-base font-semibold mb-1 sm:mb-2">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter Title"
+                  className="input w-full text-sm sm:text-base"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm sm:text-base font-semibold mb-1 sm:mb-2">
+                  Description
+                </label>
+                <textarea
+                  placeholder="Enter description for activity"
+                  className="textarea w-full text-sm sm:text-base min-h-[80px] sm:min-h-[100px]"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="flex justify-center items-center w-full">
                 <button
                   type="submit"
-                  className="btn bg-orange-400 text-white"
+                  className="btn bg-orange-400 hover:bg-orange-500 text-white w-full sm:w-auto px-6 sm:px-8 text-sm sm:text-base"
                   disabled={loading}
                 >
                   <b>{loading ? "Adding..." : "Add"}</b>
@@ -279,18 +279,20 @@ const SelfCareList = () => {
               </div>
             </form>
 
-            <p className="font-semibold text-2xl mt-5">Progress</p>
-            <p className="text-2xl text-orange-400 mt-2 font-bold mb-2">
+            <p className="font-semibold text-lg sm:text-xl md:text-2xl mt-4 sm:mt-5">
+              Progress
+            </p>
+            <p className="text-xl sm:text-2xl text-orange-400 mt-1 sm:mt-2 font-bold mb-1 sm:mb-2">
               {selfCareActivities.length > 0
                 ? `${Math.round(
                     (completedCount / selfCareActivities.length) * 100
                   )}%`
                 : "0%"}
-              <span className="text-sm font-medium text-gray-400">
+              <span className="text-xs sm:text-sm font-medium text-gray-400 ml-2">
                 ({completedCount} out of {selfCareActivities.length})
               </span>
             </p>
-            <div className="w-56 h-4 bg-orange-200 rounded-full overflow-hidden mt-2 mb-2">
+            <div className="w-full sm:w-64 h-3 sm:h-4 bg-orange-200 rounded-full overflow-hidden mt-2 mb-3 sm:mb-4">
               <div
                 className="h-full bg-orange-400 transition-all duration-500 ease-in-out"
                 style={{
@@ -303,40 +305,40 @@ const SelfCareList = () => {
               />
             </div>
 
-            <div className="h-50 overflow-y-scroll">
+            <div className="max-h-[300px] sm:max-h-[400px] overflow-y-auto">
               {loading ? (
-                <p className="text-center text-orange-400 p-4">
+                <p className="text-center text-orange-400 p-3 sm:p-4 text-sm sm:text-base">
                   Loading activities...
                 </p>
               ) : selfCareActivities.length === 0 ? (
-                <p className="text-center text-orange-400 p-4">
+                <p className="text-center text-orange-400 p-3 sm:p-4 text-sm sm:text-base">
                   No activities have been added
                 </p>
               ) : (
-                <ul className="p-3">
+                <ul className="space-y-2 sm:space-y-2.5">
                   {selfCareActivities.map((activity) => (
                     <li key={activity._id}>
-                      <div className="p-3 my-2 grid grid-cols-[10%_80%_10%] rounded-2xl shadow-lg border-2 border-white">
-                        <div className="flex justify-center items-center">
+                      <div className="p-2.5 sm:p-3 flex items-start gap-2 sm:gap-3 rounded-lg sm:rounded-2xl shadow-lg border-2 border-white">
+                        <div className="flex justify-center items-center pt-0.5 sm:pt-1">
                           <input
                             type="checkbox"
-                            className="w-6 h-6 accent-orange-400 cursor-pointer"
+                            className="w-5 h-5 sm:w-6 sm:h-6 accent-orange-400 cursor-pointer"
                             checked={checkedActivities.has(activity._id)}
                             onChange={(e) => activityStatus(e, activity._id)}
                             disabled={loading}
                           />
                         </div>
-                        <div className="flex flex-col gap-1">
-                          <p className="text-orange-400 font-semibold">
+                        <div className="flex flex-col gap-0.5 sm:gap-1 flex-1 min-w-0">
+                          <p className="text-orange-400 font-semibold text-sm sm:text-base">
                             {activity.title}
                           </p>
-                          <p className="text-gray-500 text-sm">
+                          <p className="text-gray-500 text-xs sm:text-sm">
                             {activity.description}
                           </p>
                           <p className="text-xs text-gray-400">
                             Weekly count: {activity.weeklyCount || 0}
                             {activity.lastPerformed && (
-                              <span className="ml-2">
+                              <span className="ml-1 sm:ml-2">
                                 | Last:{" "}
                                 {new Date(
                                   activity.lastPerformed
@@ -347,11 +349,11 @@ const SelfCareList = () => {
                         </div>
                         <div className="flex flex-col justify-center items-center">
                           <button
-                            className="btn bg-orange-400 rounded-lg text-white"
+                            className="btn btn-sm sm:btn-md bg-orange-400 hover:bg-orange-500 rounded-lg text-white"
                             onClick={() => deleteActivity(activity._id)}
                             disabled={loading}
                           >
-                            <i className="fa-solid fa-trash"></i>
+                            <i className="fa-solid fa-trash text-xs sm:text-sm"></i>
                           </button>
                         </div>
                       </div>
@@ -362,20 +364,24 @@ const SelfCareList = () => {
             </div>
           </div>
 
-          {/* Right Column: Chart */}
           <div className="w-full">
-            <div className="w-[100%] h-lvh md:flex-1 flex flex-col border-2 border-white p-5 rounded-2xl shadow-lg justify-center items-center">
-              <h1 className="text-xl font-bold">Weekly SelfCare Trend</h1>
-              <p className="my-5">Your Self-Care trend over the past week.</p>
-              <SelfCareChart list={selfCareActivities} />
+            <div className="w-full h-auto min-h-[300px] sm:min-h-[400px] lg:h-full flex flex-col border-2 border-white p-4 sm:p-5 rounded-xl sm:rounded-2xl shadow-lg justify-center items-center">
+              <h1 className="text-lg sm:text-xl font-bold text-center">
+                Weekly SelfCare Trend
+              </h1>
+              <p className="my-3 sm:my-4 text-sm sm:text-base text-center text-gray-600">
+                Your Self-Care trend over the past week.
+              </p>
+              <div className="w-full flex-1">
+                <SelfCareChart list={selfCareActivities} />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Music Player */}
-        <div>
-          <div className="min-w-screen flex border-2 border-white flex-col p-5 rounded-2xl shadow-lg">
-            <h1 className="text-xl font-bold mb-5">
+        <div className="w-full">
+          <div className="w-full flex border-2 border-white flex-col p-4 sm:p-5 rounded-xl sm:rounded-2xl shadow-lg">
+            <h1 className="text-lg sm:text-xl font-bold mb-3 sm:mb-5">
               Music List for Relaxation
             </h1>
             <MusicPlayer />
