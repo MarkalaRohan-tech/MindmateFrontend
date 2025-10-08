@@ -5,7 +5,7 @@ import { SuccessToast, ErrorToast } from "../Utils/ReactToast";
 import { toast } from "react-toastify";
 import { useAuth } from "../Context/AuthContext";
 import MoodLogForm from "../components/MoodLogForm";
-import MoodTrendChart from "../Components/MoodTrendChart";
+import MoodTrendChart from "../components/MoodTrendChart";
 import SuggestedActivity from "../components/SuggestedActivity";
 import api from "../Utils/axiosInstance";
 
